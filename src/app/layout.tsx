@@ -20,7 +20,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname();
-  const showLayout = pathname !== '/login';
+  const protectedPath = ['/login', '/register']
+  const showLayout = !protectedPath.includes(pathname);
 
   return (
     <html lang="en">
