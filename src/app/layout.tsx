@@ -1,11 +1,7 @@
-"use client";
-
 import './globals.css'
-import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import Header from '../components/Header'
-import Sidebar from '../components/Sidebar'
-import { usePathname } from 'next/navigation'
+import type { Metadata } from 'next'
+import ClientLayout from '../components/layout'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,34 +15,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname();
-  const protectedPath = ['/login', '/register']
-  const showLayout = !protectedPath.includes(pathname);
-
   return (
     <html lang="en">
       <body className={inter.className}>
-        {showLayout ? 
-        // pages with header/sidebar
-        (
-          <div className="min-h-screen grid grid-cols-[auto,1fr] grid-rows-[auto,1fr]">
-            <header className="col-span-2">
-              <Header />
-            </header>
-
-            <aside className="row-span-2 bg-gray-100">
-              <Sidebar />
-            </aside>
-
-            <main className="p-6">
-              {children}
-            </main>
-          </div>
-        ) : 
-        // pages without header/sidebar
-        (
-          <div>{children}</div> 
-        )}
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   )
