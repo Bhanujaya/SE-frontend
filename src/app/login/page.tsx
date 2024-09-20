@@ -1,4 +1,4 @@
-"use client";  // Ensure this is a client component
+"use client";  
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -47,11 +47,11 @@ export default function Login() {
                   placeholder="Enter your email"
                   id="email"
                   name="email"
-                  className={`mt-2 p-5 w-full text-3xl border rounded-2xl focus:outline-none ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`mt-2 p-5 w-full text-3xl border border-slate-400 rounded-2xl focus:outline-customDarkBlue ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                {errors.email && <p className="text-red-500 text-2xl mt-2">{errors.email}</p>}
+                {errors.email && <p className="eMessage">{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-3xl text-gray-700">Password</label>
@@ -61,11 +61,11 @@ export default function Login() {
                     placeholder="Enter your password"
                     id="password"
                     name="password"
-                    className={`mt-2 p-5 w-full text-3xl border rounded-2xl focus:outline-none ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`mt-2 p-5 w-full text-3xl border border-slate-400 rounded-2xl focus:outline-customDarkBlue ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <div className="absolute inset-y-0 right-0 pr-3 pt-4 flex items-center text-xl leading-5">
+                  <div className="absolute inset-y-0 top-2 right-0 pr-3 pt-4 flex items-center text-xl leading-5">
                     <button type="button" onClick={togglePassword} className="text-gray-800 focus:outline-none">
                       {showPassword ? (
                         <svg width="55" height="" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M22.2991 12.1613C22.2991 12.1613 19.2991 18.1613 12.2991 18.1613C5.29907 18.1613 2.29907 12.1613 2.29907 12.1613C2.29907 12.1613 5.29907 6.16125 12.2991 6.16125C19.2991 6.16125 22.2991 12.1613 22.2991 12.1613Z" stroke="black" stroke-linecap="round"/> <circle cx="12.2991" cy="12.1613" r="3" stroke="black" stroke-linecap="round"/> </svg>                      ) : (
@@ -74,7 +74,7 @@ export default function Login() {
                     </button>
                   </div>
                 </div>
-                {errors.password && <p className="text-red-500 text-2xl mt-2">{errors.password}</p>}
+                {errors.password && <p className="eMessage">{errors.password}</p>}
               </div>
               <div className="text-right">
                 <Link href="/register" className="text-2xl text-slate-500 hover:underline">Forgot Password?</Link>
