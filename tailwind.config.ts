@@ -11,6 +11,9 @@ const config: Config = {
       colors: {
         'customGray': '#fafbfc',
         'customDarkBlue': '#111F34',
+        'customLightBLue': '#47566C',
+        'customLightPurple': '#D5D7FF',
+        'customPurple': '#8589F8',
       },
       fontFamily: {
         sans: ['Roboto', 'sans-serif'],

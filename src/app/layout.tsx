@@ -1,4 +1,4 @@
-"use client"; // Add this line at the top
+"use client";
 
 import './globals.css'
 import type { Metadata } from 'next'
@@ -26,9 +26,27 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {showLayout && <Header />}
-        {showLayout && <Sidebar />}
-        {children}
+        {showLayout ? 
+        // pages with header/sidebar
+        (
+          <div className="min-h-screen grid grid-cols-[auto,1fr] grid-rows-[auto,1fr]">
+            <header className="col-span-2">
+              <Header />
+            </header>
+
+            <aside className="row-span-2 bg-gray-100">
+              <Sidebar />
+            </aside>
+
+            <main className="p-6">
+              {children}
+            </main>
+          </div>
+        ) : 
+        // pages without header/sidebar
+        (
+          <div>{children}</div> 
+        )}
       </body>
     </html>
   )

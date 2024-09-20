@@ -1,89 +1,170 @@
-'use client'
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react'
-import styles from '../styles/Header.module.css'
+import Link from "next/link";
+import {
+  Popover,
+  PopoverButton,
+  PopoverGroup,
+  PopoverPanel,
+} from "@headlessui/react";
 
-const Header = () => {
+import {
+  ChevronDownIcon,
+  PhoneIcon,
+  PlayCircleIcon,
+} from "@heroicons/react/20/solid";
 
-  // temp database
-  const currentUser = {
-    firstName: "Nichakann",
-    surName: "Nernngam",
-    age: 20
-  }
-  const peopleName = "Alex"
-  const projectName = "Project 1"
-
-  
-
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-
-  const toggleNotificationDropdown = () => {
-    setShowNotificationDropdown(!showNotificationDropdown);
-  }
-
-  const toggleProfileDropdown = () => {
-    setShowProfileDropdown(!showProfileDropdown);
-  }
-
-  const closeDropdowns = () => {
-    setShowNotificationDropdown(false);
-    setShowProfileDropdown(false);
-  }
-
-  const isDropdownOpen = showNotificationDropdown || showProfileDropdown;
-
-  return (
-    <nav className={styles.header}>
-      <div className={styles.container}>
-        <Link href='/' className={styles.logo}>Kidmaiok</Link> {/*Wainting for logo*/}
-        <ul className={styles.navLinks}>
-
-          <button onClick={toggleNotificationDropdown} className={styles.notificationButton}>
-            <img src='/bell.svg' alt="Notification" className={styles.bellIcon}></img>
-          </button>
-          {showNotificationDropdown && (
-            <div className={styles.dropdownNotification}>
-              <h1 className={styles.notificationHeader}>Notification</h1>
-              <li>
-              <p className={styles.notificationContent}><strong>{peopleName}</strong> invite you to <strong>{projectName}</strong></p>
-              <p className={styles.notificationContent}><strong>{peopleName}</strong> invite you to <strong>{projectName}</strong></p>
-              <p className={styles.notificationContent}><strong>{peopleName}</strong> invite you to <strong>{projectName}</strong></p>
-              </li>
-            </div>
-          )}
-
-          <button onClick={toggleProfileDropdown} className={styles.profileSettingButton}>
-            <div className={styles.iconContainer}>
-              <img src="/profile.svg" alt="Profile" className={styles.profileSettingIcon} />
-              <img src="/dropdown.svg" alt="Dropdown" className={styles.profileSettingIcon} />
-            </div>
-            </button> 
-          {showProfileDropdown && (
-            <div className={styles.dropdownProfile}>
-              <h1 className={styles.currentUserFullName}>{currentUser.firstName} {currentUser.surName}</h1>
-              <Link href='/profileSetting' className={styles.profileContent}> 
-                <img src='/profile2.svg' alt='Profile' className={styles.peopleIcon}/> 
-                <span className={styles.profileText}>My profile</span>
-              </Link>
-              <h1 className={styles.separator} />
-              <Link href='/login' className={styles.profileContent}> 
-                <img src='/logout.svg' alt='Logout' className={styles.logoutIcon}/> 
-                <span className={styles.profileText}>Log out</span>
-              </Link>
-            </div>
-          )}
-
-        </ul>
-
-        {isDropdownOpen && (
-          <div className={styles.overlay} onClick={closeDropdowns}></div>
-        )}
-      </div>
-    </nav>
-  );
+const currentUser = {
+  firstName: "Nichakann",
+  surName: "Nernngam",
+  age: 20,
 };
 
-export default Header;
+const notifications = [
+  {
+    name: "Alex",
+    projectName: "Project 1",
+    href: "#",
+    profileImgPath: "/profile.svg",
+  },
+  {
+    name: "Mario",
+    projectName: "Project 1",
+    href: "#",
+    profileImgPath: "/profile.svg",
+  },
+  {
+    name: "Noppadol",
+    projectName: "Project 1",
+    href: "#",
+    profileImgPath: "/profile.svg",
+  },
+  {
+    name: "John",
+    projectName: "Project 1",
+    href: "#",
+    profileImgPath: "/profile.svg",
+  },
+  {
+    name: "Chalawit",
+    projectName: "Project 1",
+    href: "#",
+    profileImgPath: "/profile.svg",
+  },
+];
+
+const profileSettings = [
+  { button: "Profile", href: "#", iconPath: "/profile2.svg" },
+  { button: "Log out", href: "#", iconPath: "/logout.svg" },
+];
+
+export default function Header() {
+  return (
+    <header className="bg-customDarkBlue">
+      <nav
+        aria-label="Global"
+        className="mx-auto flex max-w-8xl items-center justify-between p-2 px-6"
+      >
+        <div className="flex lg:flex-1">
+          <Link href="/" className="-m-1.5 p-1.5 text-white">
+            <span className="sr-only">Your Company</span>
+            Logo
+          </Link>
+        </div>
+        <div className="flex flex-1 justify-end items-center">
+          <PopoverGroup className="flex gap-x-6">
+            <Popover className="relative flex justify-center items-center">
+              {/* Notification button */}
+              <PopoverButton className="flex items-center justify-center gap-x-1 text-sm font-semibold leading-6 text-white h-8 w-8 hover:bg-gray-600 rounded-md">
+                <img src="/bell.svg" alt="Notification" className="w-7" />
+              </PopoverButton>
+
+              {/* Drop down */}
+              <PopoverPanel className="absolute -right-1 top-full z-10 mt-3 w-80 max-w-sm overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5">
+                <div className="grid grid-cols-1 divide-x divide-gray-900/5 bg-gray-50">
+                  <p className="flex items-center justify-start gap-x-2.5 p-6 pb-2 text-sm font-semibold leading-6 text-gray-900 hover:bg-gray-100">
+                    Notification
+                  </p>
+                </div>
+                <div className="p-1">
+                  {notifications.map((item) => (
+                    <div
+                      key={item.name}
+                      className="group relative flex items-center gap-x-4 rounded-lg p-2 text-sm leading-2 hover:bg-gray-50"
+                    >
+                      <div className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
+                        <img
+                          src={item.profileImgPath}
+                          aria-hidden="true"
+                          className="h-6 w-6 text-gray-600 group-hover:text-indigo-600"
+                        />
+                      </div>
+                      <div className="flex-auto">
+                        <Link
+                          href={item.href}
+                          className="block font-semibold text-gray-900 p-0"
+                        >
+                          {item.name}
+                          <span className="absolute inset-0" />
+                        </Link>
+                        <p className="mt-1 text-gray-600">
+                          {" "}
+                          invited you to{" "}
+                          <span className="font-semibold text-gray-900">
+                            {item.projectName}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </PopoverPanel>
+            </Popover>
+
+            <Popover className="relative">
+              {/* Setting button */}
+              <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-white bg-gray-700 hover:bg-gray-600 rounded-full p-1">
+                <img src="/profile.svg" alt="Profile" className="w-9" />
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className="h-4 w-4 flex-none text-gray-300"
+                />
+              </PopoverButton>
+
+              {/* Drop down */}
+              <PopoverPanel className="absolute -right-1 top-full z-10 mt-3 w-screen max-w-[300px] overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5">
+                <div className="grid grid-cols-1 divide-x divide-gray-900/5 bg-gray-50">
+                  <p className="flex items-center justify-start gap-x-2.5 p-6 pb-2 text-md font-semibold leading-6 text-gray-900 hover:bg-gray-100">
+                    {currentUser.firstName} {currentUser.surName}
+                  </p>
+                </div>
+                <div className="p-2">
+                  {profileSettings.map((item, index) => (
+                    <div
+                      key={item.button}
+                      className={`group relative flex items-center gap-x-6 rounded-lg p-2 text-sm leading-6 hover:bg-gray-50 ${
+                        index !== profileSettings.length - 1
+                          ? "border-b border-gray-200"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg group-hover:bg-white">
+                        <img src={item.iconPath} alt="" />
+                      </div>
+                      <div className="flex-auto">
+                        <Link href={item.href} className="block text-gray-500">
+                          {item.button}
+                          <span className="absolute inset-0" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </PopoverPanel>
+            </Popover>
+          </PopoverGroup>
+        </div>
+      </nav>
+    </header>
+  );
+}
