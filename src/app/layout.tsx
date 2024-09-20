@@ -1,11 +1,7 @@
-"use client"; // Add this line at the top
-
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import Header from '../components/Header'
-import Sidebar from '../components/Sidebar'
-import { usePathname } from 'next/navigation'
+import Layout from '../components/Layout' // New client component
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,16 +15,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname();
-  const protectedPath = ['/login', '/register']
-  const showLayout = !protectedPath.includes(pathname);
-
   return (
     <html lang="en">
       <body className={inter.className}>
-        {showLayout && <Header />}
-        {showLayout && <Sidebar />}
-        {children}
+        <Layout>{children}</Layout> {/* Using client component */}
       </body>
     </html>
   )
