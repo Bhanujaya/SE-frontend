@@ -92,7 +92,7 @@ export default function Project() {
         {/* Conditional rendering of the sliding panel */}
         {isPanelOpen && (
            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-           <div className="bg-white w-5/12 h-4/6  rounded-lg shadow-lg relative">
+           <div className="bg-white w-5/12 h-4/5  rounded-lg shadow-lg relative">
         
 
             {/* Image Frame */}
