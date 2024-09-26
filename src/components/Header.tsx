@@ -54,7 +54,7 @@ const notifications = [
 ];
 
 const profileSettings = [
-  { button: "Profile", href: "#", iconPath: "/profile2.svg" },
+  { button: "Profile", href: "/profile-info", iconPath: "/profile2.svg" },
   { button: "Log out", href: "#", iconPath: "/logout.svg" },
 ];
 
