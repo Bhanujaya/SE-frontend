@@ -18,7 +18,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </header>
           
           <aside className="row-span-2 bg-gray-100">
-            <Sidebar />
+            <Sidebar pathname={pathname} />
           </aside>
 
           <main className="p-6">
