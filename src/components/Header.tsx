@@ -66,7 +66,7 @@ export default function Header() {
         className="mx-auto flex max-w-8xl items-center justify-between p-2 px-6"
       >
         <div className="flex lg:flex-1">
-          <Link href="/" className="-m-1.5 p-1.5 text-white">
+          <Link href="/" className="m-1.5 p-1.5 text-white">
             <span className="sr-only">Your Company</span>
             Logo
           </Link>
@@ -122,7 +122,7 @@ export default function Header() {
             </Popover>
 
             <Popover className="relative">
-              {/* Setting button */}
+              {/* Profile Setting button */}
               <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-white bg-gray-700 hover:bg-gray-600 rounded-full p-1">
                 <img src="/profile.svg" alt="Profile" className="w-9" />
                 <ChevronDownIcon

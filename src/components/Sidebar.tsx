@@ -30,18 +30,12 @@ export default function Sidebar({ pathname }: { pathname: string }) {
     : homeNavigation;
 
   return (
-    <Disclosure as="nav" className="bg-gray-100 w-56 min-h-screen max-w-screen">
+    <Disclosure as="nav" className="bg-gray-100 w-56 min-h-screen max-w-screen ring-1 ring-gray-200">
       <div className="flex flex-col h-full">
-        {/* ตำแหน่งปัจจุบัน */}
-        <div className="px-60 py-2"> 
-          <h2 className="text-lg text-gray-700">
-            {navigation.find(item => item.href === pathname)?.name || 'Navigation'}
-          </h2>
-        </div>
 
         {/* Navigation */}
         <div className="flex-1 px-2 py-1"> {/* เพิ่มค่า padding top */}
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col space-y-2 mt-2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
