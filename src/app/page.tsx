@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import {
   DragDropContext,
@@ -18,20 +17,16 @@ const currentUser = {
 };
 
 const recentlyOpens = [
-  { name: "Project name", type: "project",  href: "/project" },
-  { name: "Project name", type: "project",  href: "/project" },
-  { name: "Task name",    type: "task",     href: "/project/task-1" },
-  { name: "Task name",    type: "task",     href: "/project/task-1" },
-  { name: "Project name", type: "project",  href: "/project" },
-  { name: "Project name", type: "project",  href: "/project" },
-  { name: "Task name",    type: "task",     href: "/project/task-1" },
+  { type: "project", name: "Project name", href: "#" },
+  { type: "task", name: "Task name", href: "#", fromProject: "Project name" },
   // More items...
 ];
 
 // Define task and state structure for Kanban
 interface Task {
   id: string;
-  content: string;
+  name: string;
+  fromProject: string;
 }
 
 interface TaskState {
@@ -44,19 +39,24 @@ export default function Homepage() {
   // Initial Kanban task state
   const [tasks, setTasks] = useState<TaskState>({
     todo: [
-      { id: "task-1", content: "Task 1" },
-      { id: "task-2", content: "Task 2" },
-      { id: "task-5", content: "Task 5" },
-      { id: "task-6", content: "Task 6" },
-      { id: "task-7", content: "Task 7" },
+      {
+        id: "task-1",
+        name: "Task name",
+        fromProject: "Project name",
+      },
+      {
+        id: "task-2",
+        name: "Task name",
+        fromProject: "Project name",
+      },
     ],
-    inProgress: [{ id: "task-3", content: "Task 3" }],
-    done: [{ id: "task-4", content: "Task 4" }],
+    inProgress: [],
+    done: [],
   });
 
   // Handle drag and drop
   const onDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+    const { destination, source } = result;
 
     if (!destination) return; // If dropped outside a list
 
@@ -84,7 +84,18 @@ export default function Homepage() {
     }
   };
 
-  // Date options for greeting
+  const getGreeting = (hour: number): string => {
+    if (hour >= 21 || hour < 6) {
+      return "Good night";
+    } else if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 18) {
+      return "Good afternoon";
+    } else {
+      return "Good evening";
+    }
+  };
+
   const options: Intl.DateTimeFormatOptions = {
     timeZone: "Asia/Bangkok",
     hour: "numeric",
@@ -96,24 +107,15 @@ export default function Homepage() {
     hour12: false,
   };
 
-  const getGreeting = (): string => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    if (currentHour >= 21 || currentHour < 6) {
-      return "Good night";
-    } else if (currentHour < 12) {
-      return "Good morning";
-    } else if (currentHour < 18) {
-      return "Good afternoon";
-    } else {
-      return "Good evening";
-    }
-  };
+  // Get the current date and time depending on options
+  const currentDate = new Date().toLocaleString("en-US", options);
+  // Create a Date object from the localized string (currentDate) to get the hour
+  const currentHour = new Date(currentDate).getHours();
 
-  const greetingMessage = getGreeting();
+  const greetingMessage = getGreeting(currentHour);
 
   return (
-    <div className="bg-gray-50 pb-24 sm:pb-32">
+    <div className="bg-white pb-24 sm:pb-32">
       {/* Greeting */}
       <div className="mx-auto max-w-7xl lg:px-8">
         <h2 className="text-left text-pretty text-2xl py-4 font-semibold text-gray-800">
@@ -123,11 +125,10 @@ export default function Homepage() {
 
       {/* Layout Grid */}
       <div className="mx-auto max-w-7xl px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-2 gap-8">
+        
         {/* Recently Opened Section */}
-        <div className="relative bg-white shadow rounded-lg p-6 overflow-hidden">
-          <h3 className="text-lg font-semibold text-gray-800">
-            Recently Opened
-          </h3>
+        <div className="relative bg-white rounded-lg p-6 overflow-hidden ring-1 ring-gray-200 hover:ring-gray-400">
+          <h3 className="text-lg font-semibold text-gray-800">Recents</h3>
           <div className="mt-4 max-h-[250px] overflow-y-auto">
             {recentlyOpens.map((item) => (
               <Link key={item.name} href={item.href}>
@@ -141,7 +142,15 @@ export default function Homepage() {
                     alt={item.type}
                     className="w-6"
                   />
-                  <span>{item.name}</span>
+                  <div>
+                    {item.name}
+                    {/*Note: inside the parentheses is alredy true, so we just check if item.type is true and show it*/}
+                    {item.type === "task" && (
+                      <span className="ml-2 text-gray-400">
+                        &gt; {item.fromProject}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -149,7 +158,7 @@ export default function Homepage() {
         </div>
 
         {/* Kanban Section */}
-        <div className="relative bg-white shadow rounded-lg p-4 overflow-hidden lg:col-span-2">
+        <div className="relative bg-white shadow rounded-lg p-4 overflow-hidden lg:col-span-2 ring-1 ring-gray-200 hover:ring-gray-400">
           <h3 className="text-lg font-semibold text-gray-800 text-left">
             My Works
           </h3>
@@ -164,14 +173,14 @@ export default function Homepage() {
                         {...provided.droppableProps}
                         className="p-4 bg-gray-200 rounded-lg h-[15rem] overflow-y-auto"
                       >
-                        <div className="flex justify-center items-center text-center">
+                        <div className="flex items-center text-center mb-6">
                           <span
                             className={`flex items-center justify-center text-sm font-semibold p-1 px-2 rounded-full text-white ${
                               col === "todo"
-                                ? "bg-orange-500"
+                                ? "bg-orange-400"
                                 : col === "inProgress"
-                                ? "bg-blue-500"
-                                : "bg-green-500"
+                                ? "bg-blue-400"
+                                : "bg-green-400"
                             } whitespace-nowrap`}
                           >
                             <img src="todo.svg" alt={col} className="mr-2" />{" "}
@@ -194,13 +203,20 @@ export default function Homepage() {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className="p-2 mt-2 bg-white rounded-lg shadow"
+                                className="flex p-4 mt-2 bg-white rounded-lg shadow select-none hover:bg-gray-100"  // Prevent drag and highlight the content instead
                               >
-                                {task.content}
+                                <span className="mr-2">
+                                  <img src="/task.svg" alt="Task" />
+                                </span>
+                                {task.name}
+                                <span className="ml-2 text-gray-400">
+                                  &gt; {task.fromProject}
+                                </span>
                               </div>
                             )}
                           </Draggable>
                         ))}
+
                         {provided.placeholder}
                       </div>
                     )}
