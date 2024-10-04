@@ -29,6 +29,9 @@ export default function Sidebar({ pathname }: { pathname: string }) {
     ? profileNavigation 
     : homeNavigation;
 
+  // Highlighting the project link
+  const isProjectsPage = pathname.startsWith('/project-board');
+
   return (
     <Disclosure as="nav" className="bg-gray-100 w-56 min-h-screen max-w-screen ring-1 ring-gray-200">
       <div className="flex flex-col h-full">
@@ -42,7 +45,7 @@ export default function Sidebar({ pathname }: { pathname: string }) {
                 href={item.href}
                 aria-current={pathname === item.href ? 'page' : undefined}
                 className={classNames(
-                  pathname === item.href ? 'bg-customLightPurple' : 'hover:bg-gray-200',
+                  item.name === 'Projects' && isProjectsPage ? 'bg-customLightPurple' : pathname === item.href ? 'bg-customLightPurple' : 'hover:bg-gray-200',
                   'flex items-center space-x-3 rounded-md px-3 py-2 text-base font-medium text-gray-500'
                 )}
               >
