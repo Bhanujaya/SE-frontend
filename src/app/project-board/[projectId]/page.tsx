@@ -6,7 +6,7 @@ import MemberContainer from "./components/MemberContainer";
 import MeetingContainer from "./components/MeetingContainer";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import ActivityPopup from "./components/ActivityPopup";
+import ActivityLogPopup from "./components/ActivityLogPopup";
 
 // ------------- Mock data --------------
 
@@ -160,7 +160,7 @@ export default function ProjectLayout({
       )}
 
       {/* Activity Popup */}
-      <ActivityPopup
+      <ActivityLogPopup
         isVisible={isActivityPopupVisible}
         onClose={() => setIsActivityPopupVisible(false)}
       />

@@ -4,32 +4,22 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import CommentModal from "./CommentModal";
 
-
-
-interface Task {
+export type Task = {
+  id: string;
   name: string;
   assignee: string[];
   dueDate: string;
   status: "To Do" | "In Progress" | "Done";
   comments: { name: string; text: string; time: string }[];
   href: string;
-  projectId: string; 
+  projectId: string;
 }
 
 // ------------------ Mock data ------------------
 
-const currentProject = {
-  id: 1,
-  projectName: "Project Name 1",
-  creator: "Pleang",
-  endDate: "12/02/24",
-  description: "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
-  imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSs1xdLImF96hHZqmsAN66doFwYen9ZDW3Fbw&usqp=CAU',
-  isFavorited: false,
-}
-
 const tasksData: Task[] = [
   {
+    id: "1",
     name: "Design homepage",
     assignee: ["John Cena"],
     dueDate: "2024-10-05",
@@ -42,9 +32,10 @@ const tasksData: Task[] = [
       },
     ],
     href: "#",
-    projectId: "1"
+    projectId: "1",
   },
   {
+    id: "2",
     name: "Fix bugs in the homepage",
     assignee: ["Song Kang"],
     dueDate: "2024-10-01",
@@ -62,30 +53,30 @@ const tasksData: Task[] = [
       },
     ],
     href: "#",
-    projectId: "1"
-
+    projectId: "1",
   },
   {
+    id: "3",
     name: "Create header",
     assignee: ["Song Kang"],
     dueDate: "2024-10-01",
     status: "Done",
     comments: [],
     href: "#",
-    projectId: "1"
+    projectId: "1",
   },
 ];
 
 // -----------------------------------------------
 
-
-export default function TaskContainer({projectId}: {projectId: string}) {
-  
+export default function TaskContainer({ projectId }: { projectId: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     // Filter tasks based on projectId
-    const filteredTasks = tasksData.filter(task => task.projectId === projectId);
+    const filteredTasks = tasksData.filter(
+      (task) => task.projectId === projectId
+    );
     setTasks(filteredTasks);
   }, [projectId]);
 
@@ -101,7 +92,9 @@ export default function TaskContainer({projectId}: {projectId: string}) {
     left: number;
   }>({ top: 0, left: 0 });
 
-  {/* Handle Comment Modal */}
+  {
+    /* Handle Comment Modal */
+  }
   const handleOpenCommentModal = (task: Task, event: React.MouseEvent) => {
     const buttonRect = (event.target as HTMLElement).getBoundingClientRect();
     setSelectedTask(task);
@@ -206,7 +199,10 @@ export default function TaskContainer({projectId}: {projectId: string}) {
                   {/* Name column */}
 
                   <td className="flex sticky left-0 bg-white z-10 group-hover:bg-gray-100 min-w-[200px] font-semibold">
-                    <Link href={task.href} className="p-4 flex items-center w-full">
+                    <Link
+                      href={task.href}
+                      className="p-4 flex items-center w-full"
+                    >
                       <img
                         src="/task.svg"
                         alt="Task"

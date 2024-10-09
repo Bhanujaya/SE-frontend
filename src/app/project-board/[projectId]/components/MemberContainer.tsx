@@ -4,14 +4,16 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { TfiClose } from "react-icons/tfi";
 
-interface Member {
+export type Member = {
   id: string;
+  username: string;
   firstName: string;
   lastName: string;
   email: string;
-  role: "Owner" | "Member";
+  role: string;
   profileImage: string;
   projectIds: string[];
+
 }
 
 interface MemberContainerProps {
@@ -23,41 +25,41 @@ interface MemberContainerProps {
 const membersData: Member[] = [
   {
     id: "1",
+    username: "_pleang",
     firstName: "Pleang",
     lastName: "Nernngam",
     email: "lingnoi@kiki.com",
     role: "Owner",
     profileImage: "/profile.svg",
-    projectIds: ['1', '2'],
+    projectIds: ["1", "2"],
   },
   {
     id: "2",
+    username: "soodlhor",
     firstName: "Song",
     lastName: "Kang",
     email: "soodlhor@mak.com",
     role: "Member",
     profileImage: "/profile.svg",
-    projectIds: ['1', '3'],
+    projectIds: ["1", "3"],
   },
   {
     id: "3",
+    username: "big_muscle",
     firstName: "John",
     lastName: "Cena",
     email: "khangrang@mak.com",
     role: "Member",
     profileImage: "/profile.svg",
-    projectIds: ['1'],
-
-  }
+    projectIds: ["1"],
+  },
 ];
 
 // -----------------------------------------------
 
-
 export default function MemberContainer({ projectId }: MemberContainerProps) {
   const [members, setMembers] = useState<Member[]>(membersData);
 
-  
   useEffect(() => {
     // Filter meetings based on the projectId
     const filteredMembers = membersData.filter((member) =>
@@ -65,7 +67,6 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
     );
     setMembers(filteredMembers);
   }, [projectId]); // Re-run the filter when projectId changes
-
 
   // Function to remove a member
   const handleRemoveMember = (id: string) => {
@@ -75,8 +76,10 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
 
   // Function to add a new member (for simplicity, a placeholder member is added)
   const handleAddMember = () => {
-    {/* Implements later */}
-    
+    {
+      /* Implements later */
+    }
+
     // const newMember: Member = {
     //   id: "0",
     //   name: "New Member",
@@ -84,7 +87,6 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
     //   profileImage: "/profile.svg",
     // };
     // setMembers([...members, newMember]);
-
   };
 
   return (
@@ -93,7 +95,7 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
       <div className="flex items-center justify-between p-2">
         <div className="flex items-center">
           <img src="/people.svg" alt="People" className="mr-2" />
-          <h1 className="text-lg font-medium">People</h1>
+          <h1 className="text-lg font-medium">Member</h1>
         </div>
 
         <button
@@ -136,7 +138,9 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
                         />
                       )}
                     </div>
-                    <span className="text-sm ml-2">{member.firstName} {member.lastName}</span> 
+                    <span className="text-sm ml-2">
+                      {member.firstName} {member.lastName}
+                    </span>
                   </td>
                   {/* Role */}
                   <td className="p-3 text-sm">{member.role}</td>
@@ -164,7 +168,7 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
                 <td colSpan={3}>
                   <button
                     className="w-full flex items-center justify-left p-2 bg-transparent text-gray-400 hover:bg-gray-100"
-                    onClick={handleAddMember} 
+                    onClick={handleAddMember}
                   >
                     <div className="flex items-center ml-2">
                       <span className="text-2xl font-light pb-1 mr-2">+</span>{" "}
@@ -173,7 +177,6 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
                   </button>
                 </td>
               </tr>
-              
             </tbody>
           </table>
         </div>

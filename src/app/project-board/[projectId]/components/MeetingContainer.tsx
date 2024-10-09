@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { TfiClose } from "react-icons/tfi";
 
-interface Meeting {
+export type Meeting = {
   id: string;
   topic: string;
   date: string;
@@ -16,7 +16,6 @@ interface MeetingContainerProps {
   projectId: string; // Pass the projectId dynamically
 }
 
-
 // ------------------ Mock data ------------------
 
 const meetingsData: Meeting[] = [
@@ -25,19 +24,18 @@ const meetingsData: Meeting[] = [
     topic: "Meeting 1",
     date: "20/06/24",
     location: "Bankhen",
-    projectId: '1',
+    projectId: "1",
   },
   {
     id: "2",
     topic: "Meeting 2",
     date: "02/07/24",
     location: "Teenoi",
-    projectId: "1"
+    projectId: "1",
   },
 ];
 
 // -----------------------------------------------
-
 
 export default function MeetingContainer({ projectId }: MeetingContainerProps) {
   const [meetings, setMeetings] = useState<Meeting[]>(meetingsData);
@@ -59,7 +57,6 @@ export default function MeetingContainer({ projectId }: MeetingContainerProps) {
   // Function to add a new meeting
   const handleAddMeeting = () => {
     //Implements later
- 
   };
 
   return (
@@ -116,7 +113,7 @@ export default function MeetingContainer({ projectId }: MeetingContainerProps) {
                 <td colSpan={3}>
                   <button
                     className="w-full flex items-center justify-left p-2 bg-transparent text-gray-400 hover:bg-gray-100"
-                    onClick={handleAddMeeting} 
+                    onClick={handleAddMeeting}
                   >
                     <div className="flex items-center ml-2">
                       <span className="text-2xl font-light pb-1 mr-2">+</span>{" "}
@@ -125,7 +122,6 @@ export default function MeetingContainer({ projectId }: MeetingContainerProps) {
                   </button>
                 </td>
               </tr>
-
             </tbody>
           </table>
         </div>
