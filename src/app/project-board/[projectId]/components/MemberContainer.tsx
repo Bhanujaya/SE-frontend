@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { TfiClose } from "react-icons/tfi";
+import AddMemberPopup from "./AddMemberProject";
 
 export type Member = {
   id: string;
@@ -59,6 +60,7 @@ const membersData: Member[] = [
 
 export default function MemberContainer({ projectId }: MemberContainerProps) {
   const [members, setMembers] = useState<Member[]>(membersData);
+    const [isPopupVisible, setIsPopupVisible] = useState(false); 
 
   useEffect(() => {
     // Filter meetings based on the projectId
@@ -75,18 +77,40 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
   };
 
   // Function to add a new member (for simplicity, a placeholder member is added)
-  const handleAddMember = () => {
-    {
-      /* Implements later */
-    }
+  // const handleAddMember = () => {
+  //   {
+  //     /* Implements later */
+  //   }
 
-    // const newMember: Member = {
-    //   id: "0",
-    //   name: "New Member",
-    //   role: "Member",
-    //   profileImage: "/profile.svg",
-    // };
-    // setMembers([...members, newMember]);
+  //   // const newMember: Member = {
+  //   //   id: "0",
+  //   //   name: "New Member",
+  //   //   role: "Member",
+  //   //   profileImage: "/profile.svg",
+  //   // };
+  //   // setMembers([...members, newMember]);
+  // };
+
+  const handleAddMember = () => {
+    setIsPopupVisible(true); 
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupVisible(false); 
+  };
+
+    const handleInviteMember = (email: string) => {
+    const newMember: Member = {
+      id: (members.length + 1).toString(),
+      firstName: "New",
+      lastName: "Member",
+      email: email,
+      role: "Member",
+      profileImage: "/profile.svg",
+      projectIds: [projectId], 
+    };
+    setMembers([...members, newMember]); 
+    setIsPopupVisible(false); 
   };
 
   return (
@@ -181,6 +205,13 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
           </table>
         </div>
       </div>
+
+      {/* Add Member Popup */}
+      <AddMemberPopup
+        isVisible={isPopupVisible}
+        onClose={handleClosePopup}
+        onInvite={handleInviteMember}
+      />
     </>
   );
 }

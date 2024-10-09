@@ -8,6 +8,7 @@ type AddMemberPopupProps = {
     toggleTempSelect: (id: number) => void;
     handleDoneClick: () => void;
     handleCancelClick: () => void;
+    position: { top: number; left: number };
 };
 
 export const AddMemberPopup: React.FC<AddMemberPopupProps> = ({
@@ -15,9 +16,11 @@ export const AddMemberPopup: React.FC<AddMemberPopupProps> = ({
     toggleTempSelect,
     handleDoneClick,
     handleCancelClick,
+    position,
 }) => {
     return (
-        <div className="absolute z-50 mt-24 right-[10px] bg-white w-56 h-60 p-4 rounded-2xl shadow-2xl">
+        <div className="absolute z-50 mt-24 right-[10px] bg-white w-56 h-60 p-4 rounded-2xl shadow-2xl"
+              style={{ top: position.top, left: position.left }}>
             <h3 className="text-sm font-semibold mb-2">Add Member</h3>
             <div className="overflow-y-auto max-h-32 mt-3"> {/* Limit height for 4 items before scrolling */}
                 <ul>

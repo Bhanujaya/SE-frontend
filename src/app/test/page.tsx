@@ -65,6 +65,7 @@ export default function Test() {
                     toggleTempSelect={toggleTempSelect}
                     handleDoneClick={handleDoneClick}
                     handleCancelClick={handleCancelClick}
+                    position={{top:170, left:700}}
                 />
             )}
         </div>

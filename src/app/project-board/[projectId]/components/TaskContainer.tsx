@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import CommentModal from "./CommentModal";
+import AddTaskPopup from "./AddTaskPopup";
 
 export type Task = {
   id: string;
@@ -71,6 +72,9 @@ const tasksData: Task[] = [
 
 export default function TaskContainer({ projectId }: { projectId: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
+    // add task
+  const [isTaskPopupVisible, setIsTaskPopupVisible] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Filter tasks based on projectId
@@ -162,6 +166,18 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
       );
       handleCloseDeleteModal();
     }
+  };
+
+    // add task
+  const handleAddTask = (taskName: string, taskDescription: string) => {
+    console.log("Task Added:", taskName, taskDescription);
+    // Logic to add the task to the project goes here
+  };
+
+
+  // add task  
+  const handleToggleTaskPopup = () => {
+  setIsTaskPopupVisible(!isTaskPopupVisible);
   };
 
   return (
@@ -260,7 +276,7 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
                 <td colSpan={6}>
                   <button
                     className="w-full flex items-center justify-left p-2 bg-transparent text-gray-400 hover:bg-gray-100"
-                    // onClick={handleAddTask} // Uncomment and implement this function later
+                    onClick={handleToggleTaskPopup}
                   >
                     <div className="flex items-center ml-2">
                       <span className="text-2xl font-light pb-1 mr-2">+</span>{" "}
@@ -319,6 +335,13 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
           </>
         )}
       </div>
+
+      {/* Add Task Popup */}
+      <AddTaskPopup
+        isVisible={isTaskPopupVisible}
+        onClose={() => setIsTaskPopupVisible(false)}
+        onAddTask={handleAddTask}
+      />
     </>
   );
 }

@@ -7,6 +7,7 @@ import MeetingContainer from "./components/MeetingContainer";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ActivityLogPopup from "./components/ActivityLogPopup";
+import AddTaskPopup from "./components/AddTaskPopup";
 
 // ------------- Mock data --------------
 
@@ -47,6 +48,8 @@ export default function ProjectLayout({
   const router = useRouter();
   const [isDeletePopupVisible, setIsDeletePopupVisible] = useState(false);
   const [isActivityPopupVisible, setIsActivityPopupVisible] = useState(false);
+  // add task
+  const [isTaskPopupVisible, setIsTaskPopupVisible] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
 
   const handleToggleDeletePopup = () => {
@@ -61,6 +64,17 @@ export default function ProjectLayout({
     console.log("Project deleted");
     router.push("/project-board");
   };
+
+  // add task
+  const handleAddTask = (taskName: string, taskDescription: string) => {
+    console.log("Task Added:", taskName, taskDescription);
+    // Logic to add the task to the project goes here
+  };
+
+  const handleToggleTaskPopup = () => {
+  setIsTaskPopupVisible(!isTaskPopupVisible);
+  };
+
 
   useEffect(() => {
     const handleDeleteClickOutside = (event: MouseEvent) => {
@@ -101,7 +115,8 @@ export default function ProjectLayout({
 
         <div className="flex items-center justify-between gap-x-4">
           {/* Add Task button (on the header) */}
-          <button className="text-white font-medium px-4 py-1 bg-customPurple hover:bg-[#8182d1] rounded-md">
+          <button className="text-white font-medium px-4 py-1 bg-customPurple hover:bg-[#8182d1] rounded-md"
+          onClick={handleToggleTaskPopup}>
             Add Task
           </button>
 
@@ -181,6 +196,13 @@ export default function ProjectLayout({
         <div className="bg-white p-6 h-[320px] flex flex-col">
           <MeetingContainer projectId={projectId} />
         </div>
+
+        {/* Add Task Popup */}
+        <AddTaskPopup
+          isVisible={isTaskPopupVisible}
+          onClose={() => setIsTaskPopupVisible(false)}
+          onAddTask={handleAddTask}
+        />
       </div>
     </>
   );
