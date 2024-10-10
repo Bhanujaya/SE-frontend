@@ -9,7 +9,7 @@ import { BackwardIcon, UserIcon, LockClosedIcon, HomeIcon, ChartPieIcon, Squares
 
 
 const profileNavigation = [
-  { name: 'BackHome', href: '/', iconPath: "/back-page.svg" },
+  { name: 'Home', href: '/', iconPath: "/back-page.svg" },
   { name: 'Profile', href: '/profile-info', iconPath: "/profile_setting.svg" },
   { name: 'ChangePassword', href: '/changepassword', iconPath: "/changepassword.svg" },
 ];
