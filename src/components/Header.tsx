@@ -10,7 +10,7 @@ import {
 
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
-import HeaderNotification from "./HeaderNotification";
+import Notification from "./Notification";
 
 const currentUser = {
   firstName: "Nichakann",
@@ -39,10 +39,10 @@ export default function Header() {
         <div className="flex flex-1 justify-end items-center">
           <PopoverGroup className="flex gap-x-6">
             
-            {/* HeaderNotification component */}
-            <HeaderNotification />
+            {/* Notification component */}
+            <Notification />
 
-            
+
             <Popover className="relative">
               {/* Profile Setting button */}
               <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-white bg-gray-700 hover:bg-gray-600 rounded-full p-1">

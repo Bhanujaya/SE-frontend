@@ -115,7 +115,7 @@ const formatTime = (time: Date) => {
   }
 };
 
-export default function HeaderNotification() {
+export default function Notification() {
   
   // Check if there are any unread noti
   const hasUnreadNotifications = notificationsData.some(
