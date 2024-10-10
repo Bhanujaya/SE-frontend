@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CameraIcon } from "@heroicons/react/24/outline"; 
-import Notification from "@/components/Notification";
+import Notification from "@/app/profile-info/components/Notification";
 
 export default function ProfileInfo() {
   const [name, setName] = useState("Lorem");
@@ -72,6 +72,9 @@ const handleSaveChanges = () => {
 
   return (
     <div className="mt-8 flex h-screen overflow-hidden"> 
+      {notification && (
+          <Notification message={notification} />
+        )}
       <div className="p-8 ml-96 bg-white"> 
         {/* รูปโปรไฟล์ */}
         <div className="relative flex justify-center">
@@ -176,9 +179,6 @@ const handleSaveChanges = () => {
           Save Changes
         </button>
         
-        {notification && (
-          <Notification message={notification} />
-        )}
       </div>
     </div>
   );

@@ -102,6 +102,7 @@ export default function MemberContainer({ projectId }: MemberContainerProps) {
     const handleInviteMember = (email: string) => {
     const newMember: Member = {
       id: (members.length + 1).toString(),
+      username: "new_member",
       firstName: "New",
       lastName: "Member",
       email: email,

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
-import Notification from "@/app/profile-info/components/Notification";
+import { useState, useEffect, use } from 'react';
+import Notification from '@/app/profile-info/components/Notification';
 
 export default function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState("");
