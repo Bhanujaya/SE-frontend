@@ -13,8 +13,9 @@ export default function Login() {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrors({ email: '', password: '' });
 
     // Validation logic
     let formErrors = { email: '', password: '' };
@@ -30,16 +31,45 @@ export default function Login() {
     // Proceed with form submission if there are no errors
     if (!formErrors.email && !formErrors.password) {
       // Perform form submission (e.g., API call)
+      
+      try {
+        const response = await fetch("http://localhost:9000/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // "Authorization": `Bearer ${localStorage.getItem('jwt')}` // มีในหน้าอื่นที่ไม่ใช่ register กับ login (url '/login', '/register')
+          },
+          body: JSON.stringify({
+            memberEmail: email,
+            memberPassword: password,
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem("jwt", JSON.stringify(data)); // Store JWT in localStorage
+          window.location.href = "/";
+        } else {
+          console.error("Login error: ", response.statusText);
+        }
+  
+      } catch (err) {
+        console.error("Network error: ", err);
+      }
     }
   };
 
   return (
-    <div className="flex h-screen customGray font-sans">
-      <div className="hidden lg:flex items-center justify-center flex-1 text-black">
-        <div className="bg-white shadow-4xl rounded-3xl overflow-hidden lg:w-8/12 lg:h-3/5 mx-28">
+    <div className="flex h-screen font-sans bg-cover bg-no-repeat bg-[url('/login.png')] lg:bg-none">
+      
+      {/* Conditional opacity and background image for narrow screens */}
+      <div className="absolute inset-0 bg-opacity-40 bg-customGray lg:bg-transparent"></div>
+
+      <div className="flex items-center justify-center flex-1 text-black relative z-10">
+        <div className="bg-white shadow-4xl rounded-3xl overflow-hidden w-8/12 h-3/5 mx-28">
           <div className="mt-4 flex flex-col items-center justify-center">
             <h1 className="text-3xl mx-auto mt-10 font-sans font-medium">Welcome back</h1>
-            <form onSubmit={handleSubmit} className="space-y-4 w-full lg:w-3/4 mx-auto mt-3">
+            <form onSubmit={handleSubmit} className="space-y-4 w-3/4 mx-auto mt-3">
               <div>
                 <label className="block text-base text-gray-700">Email</label>
                 <input
@@ -92,7 +122,9 @@ export default function Login() {
           <h1>Computer Science, Kasetsart University</h1>
         </div>
       </div>
-      <img src="login.png" alt="" className="w-full lg:w-5/12" />
+      
+    <img src="login.png" alt="login" className="hidden lg:block w-full lg:w-5/12 object-cover object-center" />
+    
     </div>
   );
 }
