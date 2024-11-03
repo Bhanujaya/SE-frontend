@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect} from 'react';
 import Notification from '@/app/profile-info/components/Notification';
 
 export default function ChangePassword() {
@@ -16,7 +16,21 @@ export default function ChangePassword() {
     confirmPassword: "",
   });
   // Alert when success
-  const [notification, setNotification] = useState<string | null>(null);
+   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [member, setMember] = useState<{ token: string | null; memberId: string } | null>(null);
+
+  // Fetch user data from localStorage when component mounts
+  useEffect(() => {
+    const userData = localStorage.getItem("jwt");
+    if (userData) {
+      try {
+        const parsedData = JSON.parse(userData);
+        setMember(parsedData);
+      } catch (error) {
+        console.error("Error parsing userData:", error);
+      }
+    }
+  }, []);
 
   const toggleCurrentPassword = () => {
     setShowCurrentPassword(!showCurrentPassword);
@@ -30,37 +44,31 @@ export default function ChangePassword() {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Reset errors
-    let formErrors = {
+    const formErrors = {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     };
 
-    // current password
-    const storedPassword = "password";
-
+    // Validate current password
     if (!currentPassword) {
       formErrors.currentPassword = "Current password is required.";
-    } else if (currentPassword !== storedPassword) {
-      formErrors.currentPassword = "Current password is incorrect.";
     }
 
     if (!newPassword) {
       formErrors.newPassword = "New password is required.";
-    } else if (newPassword.length < 8 || newPassword.length > 20) {
-      formErrors.newPassword =
-        "Password must be between 8 and 20 characters long.";
+    } else if (newPassword.length < 6 || newPassword.length > 20) {
+      formErrors.newPassword = "Password must be between 6 and 20 characters long.";
     }
 
     if (!confirmPassword) {
       formErrors.confirmPassword = "Confirm password is required.";
     } else if (newPassword !== confirmPassword) {
-      formErrors.confirmPassword =
-        "Confirm password does not match new password.";
+      formErrors.confirmPassword = "Confirm password does not match new password.";
     }
 
     setErrors(formErrors);
@@ -68,11 +76,34 @@ export default function ChangePassword() {
     if (
       !formErrors.currentPassword &&
       !formErrors.newPassword &&
-      !formErrors.confirmPassword
+      !formErrors.confirmPassword &&
+      member
     ) {
-      console.log("success");
-      setNotification("Saved");
-      setTimeout(() => setNotification(null), 3000);
+      try {
+        // Assuming you have the `memberId` available
+        const response = await fetch("http://localhost:9000/member/edit-password", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${member.token}`, // Add authorization token
+          },
+          body: JSON.stringify({
+            memberId: member.memberId, // Replace with actual member ID
+            currentPassword,
+            newPassword,
+          }),
+        });
+
+        if (response.ok) {
+          setNotification({message: "Password changed successfully!", type: "success"});
+        } else {
+          const error = await response.json();
+          setNotification(error.message || "Password update failed");
+        }
+      } catch (error) {
+        console.error("Error updating password:", error);
+        setNotification({message: "An error occurred!", type: "error"});
+      }
 
       // Clear fields
       setCurrentPassword("");
@@ -81,6 +112,7 @@ export default function ChangePassword() {
       setShowCurrentPassword(false);
       setShowNewPassword(false);
       setShowConfirmPassword(false);
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -307,7 +339,7 @@ export default function ChangePassword() {
           Save Changes
         </button>
 
-        {notification && <Notification message={notification} />}
+        {notification && <Notification message={notification.message} type={notification.type} />}
       </form>
     </div>
   );

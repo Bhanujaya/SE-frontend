@@ -4,14 +4,17 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 export default function Register() {
-  const [email, setEmail] = useState('');
+  const [memberEmail, setEmail] = useState('');
   const [username, setUsername] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [surname, setSurname] = useState('');
-  const [password, setPassword] = useState('');
+  const [memberName, setFirstName] = useState('');
+  const [memberLastname, setSurname] = useState('');
+  const [memberPassword, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // const [img, setProfileImage] = useState("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg");
+  const DEFAULT_IMAGE = "https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg";
+  const [img, setProfileImage] = useState(DEFAULT_IMAGE);
   const [errors, setErrors] = useState({ email: '', username: '', firstName: '', surname: '', password: '', confirmPassword: '' });
 
   const togglePassword = () => {
@@ -22,36 +25,70 @@ export default function Register() {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     let formErrors = { email: '', username: '', firstName: '', surname: '', password: '', confirmPassword: '' };
-    if (!email) {
+    if (!memberEmail) {
       formErrors.email = 'Email required!';
     }
     if (!username) {
       formErrors.username = 'Username required!';
     }
-    if (!firstName) {
+    if (!memberName) {
       formErrors.firstName = 'First name required!';
     }
-    if (!surname) {
+    if (!memberLastname) {
       formErrors.surname = 'Surname required!';
     }
-    if (!password) {
+    if (!memberPassword) {
       formErrors.password = 'Password required!';
     }
     if (!confirmPassword) {
       formErrors.confirmPassword = 'Confirm password!';
-    } else if (confirmPassword !== password) {
+    } else if (confirmPassword !== memberPassword) {
       formErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(formErrors);
 
     // Proceed with form submission if there are no errors
-    if (!formErrors.email && !formErrors.username && !formErrors.firstName && !formErrors.surname && !formErrors.password && !formErrors.confirmPassword) {
-      // Perform form submission (e.g., API call)
+    // if (!formErrors.email && !formErrors.username && !formErrors.firstName && !formErrors.surname && !formErrors.password && !formErrors.confirmPassword) {
+    //   // Perform form submission (e.g., API call)
+    // }
+
+    if (Object.values(formErrors).every((field) => field === '')) {
+      try {
+        const response = await fetch('http://localhost:9000/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            memberEmail,
+            username,
+            memberName,
+            memberLastname,
+            memberPassword, 
+            img: img || DEFAULT_IMAGE
+          }),
+        });
+
+
+        if (!response.ok) {
+          // Handle error response
+          const errorData = await response.json();
+          alert(`Error: ${errorData.message || 'Something went wrong!'}`);
+        } else {
+          // Successful response
+          alert('Registration successful!');
+          // Optionally, redirect user to a login page
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('Error during registration:', error);
+        alert('Error: Could not complete registration.');
+      }
     }
   };
 
@@ -76,7 +113,7 @@ export default function Register() {
                 <input
                   type="text"
                   placeholder="Enter your email"
-                  value={email}
+                  value={memberEmail}
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-0.5 p-2.5 w-full text-lg border border-slate-400 rounded-2xl  focus:outline-customDarkBlue"
                 />
@@ -101,7 +138,7 @@ export default function Register() {
                   <input
                     type="text"
                     placeholder="Enter your first name"
-                    value={firstName}
+                    value={memberName}
                     onChange={(e) => setFirstName(e.target.value)}
                     className="mt-0.5 p-2.5 w-full text-lg border border-slate-400 rounded-2xl focus:outline-customDarkBlue"
                   />
@@ -113,7 +150,7 @@ export default function Register() {
                   <input
                     type="text"
                     placeholder="Enter your surname"
-                    value={surname}
+                    value={memberLastname}
                     onChange={(e) => setSurname(e.target.value)}
                     className="mt-0.5 p-2.5 w-full text-lg border border-slate-400 rounded-2xl focus:outline-customDarkBlue"
                   />
@@ -127,7 +164,7 @@ export default function Register() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
-                    value={password}
+                    value={memberPassword}
                     onChange={(e) => setPassword(e.target.value)}
                     className="mt-0.5 p-2.5 w-full text-lg border border-slate-400 rounded-2xl focus:outline-customDarkBlue pr-12"
                   />
@@ -136,10 +173,10 @@ export default function Register() {
                     onClick={togglePassword}
                     className="absolute inset-y-0 right-0 top-2 flex items-center text-xl leading-5 focus:outline-none"
                   >
-                    {showPassword ? (  
-                      <svg  width="55" height="35" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M22.2991 12.1613C22.2991 12.1613 19.2991 18.1613 12.2991 18.1613C5.29907 18.1613 2.29907 12.1613 2.29907 12.1613C2.29907 12.1613 5.29907 6.16125 12.2991 6.16125C19.2991 6.16125 22.2991 12.1613 22.2991 12.1613Z" stroke="black" stroke-linecap="round"/> <circle cx="12.2991" cy="12.1613" r="3" stroke="black" stroke-linecap="round"/> </svg>                      ) : (
+                    {showPassword ? (
+                      <svg width="55" height="35" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M22.2991 12.1613C22.2991 12.1613 19.2991 18.1613 12.2991 18.1613C5.29907 18.1613 2.29907 12.1613 2.29907 12.1613C2.29907 12.1613 5.29907 6.16125 12.2991 6.16125C19.2991 6.16125 22.2991 12.1613 22.2991 12.1613Z" stroke="black" stroke-linecap="round" /> <circle cx="12.2991" cy="12.1613" r="3" stroke="black" stroke-linecap="round" /> </svg>) : (
                       <svg width="55" height="35" viewBox="0 0 35 32" fill="none" xmlns="http://www.w3.org/2000/svg" > <g filter="url(#filter0_d_1_2002)"> <path d="M23.1284 9.16125C23.1284 9.16125 22.8081 9.82861 22.1284 10.6757M15.1284 14.1613C13.5204 14.1613 12.1763 13.749 11.077 13.1613M15.1284 14.1613C16.7364 14.1613 18.0806 13.749 19.1798 13.1613M15.1284 14.1613V17.6613M7.12842 9.16125C7.12842 9.16125 7.48209 9.89807 8.23469 10.806M11.077 13.1613L8.12842 16.1613M11.077 13.1613C9.81761 12.4879 8.87966 11.5841 8.23469 10.806M19.1798 13.1613L21.6284 16.1613M19.1798 13.1613C20.5102 12.4499 21.4819 11.4815 22.1284 10.6757M8.23469 10.806L5.12842 12.1613M22.1284 10.6757L25.1284 12.1613" stroke="black" strokeLinecap="round" /> </g> <defs> <filter id="filter0_d_1_2002" x="-0.871582" y="0.161255" width="39.061" height="38.883" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB" > <feFlood floodOpacity="0" result="BackgroundImageFix" /> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" /> <feOffset dy="4" /> <feGaussianBlur stdDeviation="2" /> <feComposite in2="hardAlpha" operator="out" /> <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" /> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2002" /> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2002" result="shape" /> </filter> </defs> </svg>
-                      )}
+                    )}
                   </button>
                 </div>
                 {errors.password && <p className="eMessage">{errors.password}</p>}
@@ -160,10 +197,10 @@ export default function Register() {
                     onClick={toggleConfirmPassword}
                     className="absolute inset-y-0 right-0 top-2 flex items-center text-xl leading-5 focus:outline-none"
                   >
-                     {showConfirmPassword ? (  
-                      <svg  width="55" height="35" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M22.2991 12.1613C22.2991 12.1613 19.2991 18.1613 12.2991 18.1613C5.29907 18.1613 2.29907 12.1613 2.29907 12.1613C2.29907 12.1613 5.29907 6.16125 12.2991 6.16125C19.2991 6.16125 22.2991 12.1613 22.2991 12.1613Z" stroke="black" stroke-linecap="round"/> <circle cx="12.2991" cy="12.1613" r="3" stroke="black" stroke-linecap="round"/> </svg>                      ) : (
+                    {showConfirmPassword ? (
+                      <svg width="55" height="35" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M22.2991 12.1613C22.2991 12.1613 19.2991 18.1613 12.2991 18.1613C5.29907 18.1613 2.29907 12.1613 2.29907 12.1613C2.29907 12.1613 5.29907 6.16125 12.2991 6.16125C19.2991 6.16125 22.2991 12.1613 22.2991 12.1613Z" stroke="black" stroke-linecap="round" /> <circle cx="12.2991" cy="12.1613" r="3" stroke="black" stroke-linecap="round" /> </svg>) : (
                       <svg width="55" height="35" viewBox="0 0 35 32" fill="none" xmlns="http://www.w3.org/2000/svg" > <g filter="url(#filter0_d_1_2002)"> <path d="M23.1284 9.16125C23.1284 9.16125 22.8081 9.82861 22.1284 10.6757M15.1284 14.1613C13.5204 14.1613 12.1763 13.749 11.077 13.1613M15.1284 14.1613C16.7364 14.1613 18.0806 13.749 19.1798 13.1613M15.1284 14.1613V17.6613M7.12842 9.16125C7.12842 9.16125 7.48209 9.89807 8.23469 10.806M11.077 13.1613L8.12842 16.1613M11.077 13.1613C9.81761 12.4879 8.87966 11.5841 8.23469 10.806M19.1798 13.1613L21.6284 16.1613M19.1798 13.1613C20.5102 12.4499 21.4819 11.4815 22.1284 10.6757M8.23469 10.806L5.12842 12.1613M22.1284 10.6757L25.1284 12.1613" stroke="black" strokeLinecap="round" /> </g> <defs> <filter id="filter0_d_1_2002" x="-0.871582" y="0.161255" width="39.061" height="38.883" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB" > <feFlood floodOpacity="0" result="BackgroundImageFix" /> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" /> <feOffset dy="4" /> <feGaussianBlur stdDeviation="2" /> <feComposite in2="hardAlpha" operator="out" /> <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" /> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2002" /> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2002" result="shape" /> </filter> </defs> </svg>
-                      )}
+                    )}
                   </button>
                 </div>
                 {errors.confirmPassword && <p className="eMessage">{errors.confirmPassword}</p>}

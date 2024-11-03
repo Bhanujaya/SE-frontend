@@ -1,65 +1,189 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import {
   Popover,
   PopoverButton,
   PopoverGroup,
   PopoverPanel,
 } from "@headlessui/react";
-
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
-
 import Notification from "./Notification";
 
-const currentUser = {
-  firstName: "Nichakann",
-  surName: "Nernngam",
-  age: 20,
-};
+interface MemberResponse {
+  memberEmail: string;
+  memberName: string;
+  memberLastname: string;
+  username: string;
+  img: string | null;
+}
+
+interface JWTData {
+  token: string;
+  memberId: string;
+  detail: MemberResponse;
+}
 
 const profileSettings = [
   { button: "Profile", href: "/profile-info", iconPath: "/profile2.svg" },
   { button: "Log out", href: "#", iconPath: "/logout.svg" },
 ];
 
-export default function Header() {
+export default function AuthenticatedHeader() {
+  const router = useRouter();
+  const [userData, setUserData] = useState<MemberResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get JWT from localStorage with safety check for browser environment
+        if (typeof window === 'undefined') return;
+        
+        const jwtString = localStorage.getItem("jwt");
+        if (!jwtString) {
+          throw new Error("No JWT found");
+        }
+
+        // Parse JWT data with error handling
+        let jwtData: JWTData;
+        try {
+          jwtData = JSON.parse(jwtString);
+        } catch (e) {
+          throw new Error("Invalid JWT format");
+        }
+
+        if (!jwtData.token || !jwtData.memberId) {
+          throw new Error("Invalid token data");
+        }
+
+        // Use the existing detail if available
+        if (jwtData.detail) {
+          setUserData(jwtData.detail);
+          setLoading(false);
+          return;
+        }
+
+        // Only fetch if we don't have the detail
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/member?m=${jwtData.memberId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${jwtData.token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("jwt");
+            throw new Error("Unauthorized - Please login again");
+          }
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data: MemberResponse = await response.json();
+        
+        // Update state and localStorage
+        setUserData(data);
+        const updatedJwtData = {
+          ...jwtData,
+          detail: data
+        };
+        localStorage.setItem("jwt", JSON.stringify(updatedJwtData));
+
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setError(err instanceof Error ? err.message : "Failed to load user data");
+        
+        // Only redirect to login for authentication errors
+        if (err instanceof Error && 
+            (err.message.includes("JWT") || 
+             err.message.includes("Unauthorized"))) {
+          localStorage.removeItem("jwt");
+          router.push("/login");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("jwt");
+    router.push("/login");
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-customDarkBlue p-4 flex justify-center items-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show error without redirecting
+  if (error) {
+    return (
+      <div className="bg-customDarkBlue p-4 flex justify-center items-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+  // Add null check for userData
+  if (!userData) {
+    return (
+      <div className="bg-customDarkBlue p-4 flex justify-center items-center">
+        <div className="text-white">No user data available</div>
+      </div>
+    );
+  }
+
   return (
     <header className="bg-customDarkBlue">
       <nav
         aria-label="Global"
         className="mx-auto flex max-w-8xl items-center justify-between p-2 px-6"
       >
-        <div className="flex lg:flex-1">
-          <Link href="/" className="m-1.5 p-1.5 text-white">
-            <span className="sr-only">Your Company</span>
-            Logo
+        <div className="flex lg:flex-1 ">
+          <Link href="/" >
+            {/* <span className="sr-only">Your Company</span> */}
+            <img src="taskdown.png" className="w-19 h-10 rounded-2xl"/>
           </Link>
         </div>
+
         <div className="flex flex-1 justify-end items-center">
           <PopoverGroup className="flex gap-x-6">
-            
-            {/* Notification component */}
             <Notification />
-
-
+            
             <Popover className="relative">
-              {/* Profile Setting button */}
               <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold leading-6 text-white bg-gray-700 hover:bg-gray-600 rounded-full p-1">
-                <img src="/profile.svg" alt="Profile" className="w-9" />
+                <img 
+                  src={userData.img || "/profile.svg"} 
+                  alt="Profile" 
+                  className="w-9 h-9 rounded-full object-cover"
+                />
                 <ChevronDownIcon
                   aria-hidden="true"
                   className="h-4 w-4 flex-none text-gray-300"
                 />
               </PopoverButton>
 
-              {/* Drop down */}
               <PopoverPanel className="absolute -right-1 top-full z-10 mt-3 w-screen max-w-[300px] overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5">
                 <div className="grid grid-cols-1 divide-x divide-gray-900/5 bg-gray-50">
                   <p className="flex items-center justify-start gap-x-2.5 p-6 pb-2 text-md font-semibold leading-6 text-gray-900 hover:bg-gray-100">
-                    {currentUser.firstName} {currentUser.surName}
+                    {userData.memberName} {userData.memberLastname}
                   </p>
                 </div>
+
                 <div className="p-2">
                   {profileSettings.map((item, index) => (
                     <div
@@ -74,10 +198,19 @@ export default function Header() {
                         <img src={item.iconPath} alt="" />
                       </div>
                       <div className="flex-auto">
-                        <Link href={item.href} className="block text-gray-500">
-                          {item.button}
-                          <span className="absolute inset-0" />
-                        </Link>
+                        {item.button === "Log out" ? (
+                          <button
+                            onClick={handleLogout}
+                            className="block text-gray-500 w-full text-left"
+                          >
+                            {item.button}
+                          </button>
+                        ) : (
+                          <Link href={item.href} className="block text-gray-500">
+                            {item.button}
+                            <span className="absolute inset-0" />
+                          </Link>
+                        )}
                       </div>
                     </div>
                   ))}
