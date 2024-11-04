@@ -38,83 +38,94 @@ export default function AuthenticatedHeader() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Get JWT from localStorage with safety check for browser environment
-        if (typeof window === 'undefined') return;
-        
-        const jwtString = localStorage.getItem("jwt");
-        if (!jwtString) {
-          throw new Error("No JWT found");
-        }
-
-        // Parse JWT data with error handling
-        let jwtData: JWTData;
-        try {
-          jwtData = JSON.parse(jwtString);
-        } catch (e) {
-          throw new Error("Invalid JWT format");
-        }
-
-        if (!jwtData.token || !jwtData.memberId) {
-          throw new Error("Invalid token data");
-        }
-
-        // Use the existing detail if available
-        if (jwtData.detail) {
-          setUserData(jwtData.detail);
-          setLoading(false);
-          return;
-        }
-
-        // Only fetch if we don't have the detail
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/member?m=${jwtData.memberId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${jwtData.token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem("jwt");
-            throw new Error("Unauthorized - Please login again");
-          }
-          throw new Error(`Server error: ${response.status}`);
-        }
-
-        const data: MemberResponse = await response.json();
-        
-        // Update state and localStorage
-        setUserData(data);
-        const updatedJwtData = {
-          ...jwtData,
-          detail: data
-        };
-        localStorage.setItem("jwt", JSON.stringify(updatedJwtData));
-
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-        setError(err instanceof Error ? err.message : "Failed to load user data");
-        
-        // Only redirect to login for authentication errors
-        if (err instanceof Error && 
-            (err.message.includes("JWT") || 
-             err.message.includes("Unauthorized"))) {
-          localStorage.removeItem("jwt");
-          router.push("/login");
-        }
-      } finally {
-        setLoading(false);
+  const refreshUserData = async () => {
+    try {
+      if (typeof window === 'undefined') return;
+      
+      const jwtString = localStorage.getItem("jwt");
+      if (!jwtString) {
+        throw new Error("No JWT found");
       }
-    };
 
-    fetchUserData();
-  }, [router]);
+      let jwtData: JWTData;
+      try {
+        jwtData = JSON.parse(jwtString);
+      } catch (e) {
+        throw new Error("Invalid JWT format");
+      }
+
+      if (!jwtData.token || !jwtData.memberId) {
+        throw new Error("Invalid token data");
+      }
+
+      if (jwtData.detail) {
+        setUserData(jwtData.detail);
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/member?m=${jwtData.memberId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${jwtData.token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("jwt");
+          throw new Error("Unauthorized - Please login again");
+        }
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data: MemberResponse = await response.json();
+      setUserData(data);
+
+    } catch (err) {
+      console.error("Error refreshing user data:", err);
+      setError(err instanceof Error ? err.message : "Failed to load user data");
+      
+      if (err instanceof Error && 
+          (err.message.includes("JWT") || 
+           err.message.includes("Unauthorized"))) {
+        localStorage.removeItem("jwt");
+        router.push("/login");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  refreshUserData();
+
+  window.addEventListener('profileUpdated', refreshUserData);
+ 
+  return () => {
+    window.removeEventListener('profileUpdated', refreshUserData);
+  };
+}, [router]);
+
+  if (error) {
+    return (
+      <div className="bg-customDarkBlue p-4 flex justify-center items-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+
+  if (!userData) {
+    return (
+      <div className="bg-customDarkBlue p-4 flex justify-center items-center">
+        <div className="text-white">No user data available</div>
+      </div>
+    );
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("jwt");
@@ -125,24 +136,6 @@ export default function AuthenticatedHeader() {
     return (
       <div className="bg-customDarkBlue p-4 flex justify-center items-center">
         <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
-
-  // Show error without redirecting
-  if (error) {
-    return (
-      <div className="bg-customDarkBlue p-4 flex justify-center items-center">
-        <div className="text-red-500">{error}</div>
-      </div>
-    );
-  }
-
-  // Add null check for userData
-  if (!userData) {
-    return (
-      <div className="bg-customDarkBlue p-4 flex justify-center items-center">
-        <div className="text-white">No user data available</div>
       </div>
     );
   }

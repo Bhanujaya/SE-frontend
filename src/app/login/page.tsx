@@ -2,20 +2,24 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Notification from '@/app/login/components/LoginNotifications';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   const togglePassword = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({ email: '', password: '' });
+    setShowNotification(false);
 
     // Validation logic
     let formErrors = { email: '', password: '' };
@@ -28,16 +32,13 @@ export default function Login() {
 
     setErrors(formErrors);
 
-    // Proceed with form submission if there are no errors
     if (!formErrors.email && !formErrors.password) {
-      // Perform form submission (e.g., API call)
       
       try {
         const response = await fetch("http://localhost:9000/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // "Authorization": `Bearer ${localStorage.getItem('jwt')}` // มีในหน้าอื่นที่ไม่ใช่ register กับ login (url '/login', '/register')
           },
           body: JSON.stringify({
             memberEmail: email,
@@ -47,13 +48,28 @@ export default function Login() {
         
         if (response.ok) {
           const data = await response.json();
-          localStorage.setItem("jwt", JSON.stringify(data)); // Store JWT in localStorage
+          localStorage.setItem("jwt", JSON.stringify(data));
           window.location.href = "/";
         } else {
+          setNotificationMessage('Invalid email or password. Please try again.');
+          setShowNotification(true);
+          
+          setTimeout(() => {
+            setShowNotification(false);
+          }, 3000);
+          
           console.error("Login error: ", response.statusText);
         }
   
       } catch (err) {
+        setNotificationMessage('Network error. Please try again later.');
+        setShowNotification(true);
+        
+        // Auto-hide notification after 3 seconds
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 3000);
+        
         console.error("Network error: ", err);
       }
     }
@@ -69,6 +85,12 @@ export default function Login() {
         <div className="bg-white shadow-4xl rounded-3xl overflow-hidden w-8/12 h-3/5 mx-28">
           <div className="mt-4 flex flex-col items-center justify-center">
             <h1 className="text-3xl mx-auto mt-10 font-sans font-medium">Welcome back</h1>
+            {showNotification && (
+                <Notification 
+                  message={notificationMessage}
+                  type="error"
+                />
+              )}
             <form onSubmit={handleSubmit} className="space-y-4 w-3/4 mx-auto mt-3">
               <div>
                 <label className="block text-base text-gray-700">Email</label>
@@ -106,11 +128,8 @@ export default function Login() {
                 </div>
                 {errors.password && <p className="eMessage">{errors.password}</p>}
               </div>
-              <div className="text-right">
-                <Link href="/register" className="text-sm text-slate-500 hover:underline">Forgot Password?</Link>
-              </div>
               <div>
-                <button type="submit" className="w-full bg-customDarkBlue text-xl text-white p-3 rounded-lg hover:bg-sky-950 focus:outline-none focus:bg-sky-950 transition-colors duration-300">Login</button>
+                <button type="submit" className="mt-2 w-full bg-customDarkBlue text-xl text-white p-3 rounded-lg hover:bg-sky-950 focus:outline-none focus:bg-sky-950 transition-colors duration-300">Login</button>
               </div>
             </form>
             <div className="mt-3 text-sm text-gray-600 text-center">

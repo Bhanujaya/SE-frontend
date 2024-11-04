@@ -18,6 +18,32 @@ interface MemberData {
   detail: MemberDetail;
 }
 
+const uploadToCloudinary = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
+
+  try {
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Upload failed');
+    }
+
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    throw new Error('Failed to upload image');
+  }
+};
+
 export default function ProfileInfo() {
   const DEFAULT_IMAGE = "https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg";
   
@@ -25,178 +51,236 @@ export default function ProfileInfo() {
   const [memberLastname, setSurname] = useState("");
   const [username, setUsername] = useState("");
   const [currentImage, setCurrentImage] = useState(""); 
-  const [newImage, setNewImage] = useState<string | null>(null); 
+  const [newImage, setNewImage] = useState<string | null>(null);
   const [isChanged, setIsChanged] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    const userData = localStorage.getItem("jwt");
-    console.log("jwt:", userData);
-
-    if (userData) {
-      try {
-        const member = JSON.parse(userData) as MemberData;
-
-        if (member.token) {
-          const fetchData = async () => {
-            try {
-              const response = await fetch(
-                `http://localhost:9000/member?m=${member.memberId}`,
-                {
-                  method: "GET",
-                  headers: {
-                    Authorization: `Bearer ${member.token}`,
-                  },
-                }
-              );
-
-              if (!response.ok) {
-                if (response.status === 401) {
-                  window.location.href = "/login";
-                  return;
-                }
-                throw new Error("Failed to fetch data");
-              }
-
-              const data = await response.json();
-              console.log("Fetched user data:", data);
-
-              setName(data.detail.memberName || '');
-              setSurname(data.detail.memberLastname || '');
-              setUsername(data.detail.username || '');
-              setCurrentImage(data.detail.img || DEFAULT_IMAGE);
-              setNewImage(null);
-              setIsChanged(false);
-
-            } catch (error) {
-              console.error("Error fetching data:", error);
-              setNotification({message: 'Failed to load profile data. Please try again.', type:"error"});
-            }
-          };
-
-          fetchData();
-        } else {
-          console.warn("No token found. Redirecting to login.");
-          window.location.href = "/login";
-        }
-      } catch (error) {
-        console.error("Invalid JWT token:", error);
-        setNotification({message: 'Invalid session data. Please log in again.', type: "error"});
-      }
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
-
-
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 5000); 
-
-      return () => clearTimeout(timer); 
-    }
-  }, [notification]); 
-
-  const handleSaveChanges = async () => {
-    if (!memberName.trim() || !memberLastname.trim() || !username.trim()) {
-       setNotification({ message: "All fields are required. Please fill out all fields.", type: 'error' });
-      setTimeout(() => setNotification(null), 5000); // Clear notification after 5 seconds
-      return; // Stop execution if any field is empty
-    }
-
-    try {
+    useEffect(() => {
       const userData = localStorage.getItem("jwt");
-      if (!userData) {
-        setNotification({message: 'Please log in to save changes', type: "error"});
-        window.location.href = "/login";
-        return;
-      }
+      console.log("jwt:", userData);
 
-      const member = JSON.parse(userData) as MemberData;
-      if (!member.token) {
-        setNotification({message: 'Invalid session. Please log in again.', type: "error"});
-        window.location.href = "/login";
-        return;
-      }
+      if (userData) {
+        try {
+          const member = JSON.parse(userData) as MemberData;
 
-      console.log("Token being used:", member.token);
+          if (member.token) {
+            const fetchData = async () => {
+              try {
+                const response = await fetch(
+                  `http://localhost:9000/member?m=${member.memberId}`,
+                  {
+                    method: "GET",
+                    headers: {
+                      Authorization: `Bearer ${member.token}`,
+                    },
+                  }
+                );
 
-      const requestBody = {
-        memberId: member.memberId,
-        detail: {
-          memberEmail: member.detail.memberEmail,
-          memberName,
-          memberLastname,
-          username,
-          // ใช้รูปใหม่ถ้ามี ไม่มีใช้รูปเดิม
-          img: newImage || currentImage 
+                if (!response.ok) {
+                  if (response.status === 401) {
+                    window.location.href = "/login";
+                    return;
+                  }
+                  throw new Error("Failed to fetch data");
+                }
+
+                const data = await response.json();
+                console.log("Fetched user data:", data);
+
+                setName(data.detail.memberName || '');
+                setSurname(data.detail.memberLastname || '');
+                setUsername(data.detail.username || '');
+                setCurrentImage(data.detail.img || DEFAULT_IMAGE);
+                setNewImage(null);
+                setIsChanged(false);
+
+              } catch (error) {
+                console.error("Error fetching data:", error);
+                setNotification({message: 'Failed to load profile data. Please try again.', type:"error"});
+              }
+            };
+
+            fetchData();
+          } else {
+            console.warn("No token found. Redirecting to login.");
+            window.location.href = "/login";
+          }
+        } catch (error) {
+          console.error("Invalid JWT token:", error);
+          setNotification({message: 'Invalid session data. Please log in again.', type: "error"});
         }
-      };
-
-      console.log("Request body:", requestBody);
-
-      const response = await fetch('http://localhost:9000/member/edit-profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${member.token}`,
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('jwt');
-          setNotification({message: 'Session expired. Please log in again.', type: "error"});
-          window.location.href = "/login";
-          return;
-        }
-        throw new Error(`Failed to update profile: ${response.status}`);
-      }
-
-      const updatedData = await response.json();
-      console.log("Updated data:", updatedData);
-
-      setName(updatedData.detail.memberName || '');
-      setSurname(updatedData.detail.memberLastname || '');
-      setUsername(updatedData.detail.username || '');
-      setCurrentImage(updatedData.detail.img || DEFAULT_IMAGE);
-      setNewImage(null);
-      
-      setNotification({ message: 'Profile updated successfully', type: "success" });
-      setIsChanged(false);
-
-    } catch (error) {
-      console.error('Error in handleSaveChanges:', error);
-      if (error instanceof Error) {
-        setNotification({ message: 'Failed to update profile: ${error.message}', type: "error" });
       } else {
-        setNotification({message: 'Failed to update profile. Please try again.', type: "error"});
+        window.location.href = "/login";
       }
-      setTimeout(() => setNotification(null), 3000);
+    }, []);
+
+    useEffect(() => {
+      if (notification) {
+        const timer = setTimeout(() => {
+          setNotification(null);
+        }, 5000); 
+
+        return () => clearTimeout(timer); 
+      }
+    }, [notification]); 
+
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        setIsUploading(true);
+        const previewUrl = URL.createObjectURL(file);
+        setNewImage(previewUrl);
+        setIsChanged(true);
+      } catch (error) {
+        console.error('Error handling image:', error);
+        setNotification({ 
+          message: 'Failed to process image. Please try again.', 
+          type: 'error' 
+        });
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
+
+    const handleSaveChanges = async () => {
+  // Input validation
+  if (!memberName.trim() || !memberLastname.trim() || !username.trim()) {
+    setNotification({ 
+      message: "All fields are required. Please fill out all fields.", 
+      type: 'error' 
+    });
+    return;
+  }
+
+  try {
+    setIsUploading(true); 
+
+    const userData = localStorage.getItem("jwt");
+    if (!userData) {
+      setNotification({message: 'Please log in to save changes', type: "error"});
+      window.location.href = "/login";
+      return;
+    }
+
+    const member = JSON.parse(userData) as MemberData;
+    if (!member.token) {
+      setNotification({message: 'Invalid session. Please log in again.', type: "error"});
+      window.location.href = "/login";
+      return;
+    }
+
+    let finalImageUrl = currentImage;
+    if (newImage && newImage.startsWith('blob:')) {
+      try {
+        const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+        const file = input?.files?.[0];
+        
+        if (file) {
+          finalImageUrl = await uploadToCloudinary(file);
+        }
+      } catch (error) {
+        console.error('Error uploading to Cloudinary:', error);
+        setNotification({
+          message: 'Failed to upload image. Please try again.',
+          type: 'error'
+        });
+        setIsUploading(false);
+        return;
+      }
+    } else if (newImage) {
+      finalImageUrl = newImage;
+    }
+
+    const requestBody = {
+      memberId: member.memberId,
+      detail: {
+        memberEmail: member.detail.memberEmail,
+        memberName,
+        memberLastname,
+        username,
+        img: finalImageUrl || DEFAULT_IMAGE
+      }
+    };
+
+    console.log("Saving profile with data:", requestBody);
+
+    // Save to database
+    const response = await fetch('http://localhost:9000/member/edit-profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${member.token}`,
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('jwt');
+        setNotification({message: 'Session expired. Please log in again.', type: "error"});
+        window.location.href = "/login";
+        return;
+      }
+      throw new Error(`Failed to update profile: ${response.status}`);
+    }
+
+    // Get updated data from response
+    const updatedData = await response.json();
+    
+    // Update local state
+    setName(updatedData.detail.memberName || '');
+    setSurname(updatedData.detail.memberLastname || '');
+    setUsername(updatedData.detail.username || '');
+    setCurrentImage(updatedData.detail.img || DEFAULT_IMAGE);
+    setNewImage(null);
+    setIsChanged(false);
+
+    // Update JWT in localStorage
+    const updatedJWT = {
+      ...member,
+      detail: {
+        ...updatedData.detail,
+        img: updatedData.detail.img || DEFAULT_IMAGE
+      }
+    };
+    localStorage.setItem('jwt', JSON.stringify(updatedJWT));
+
+    // Dispatch custom event to notify header of profile update
+    const profileUpdatedEvent = new Event('profileUpdated');
+    window.dispatchEvent(profileUpdatedEvent);
+    
+    setNotification({ 
+      message: 'Changes saved successfully!', 
+      type: "success" 
+    });
+
+  } catch (error) {
+    console.error('Error saving profile changes:', error);
+    if (error instanceof Error) {
+      setNotification({ 
+        message: `Failed to save changes: ${error.message}`, 
+        type: "error" 
+      });
+    } else {
+      setNotification({
+        message: 'An unexpected error occurred. Please try again.',
+        type: "error"
+      });
+    }
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
     setter(value);
     setIsChanged(true);
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setNewImage(imageUrl);
-      setIsChanged(true);
-    }
-  }
-
-  // ใช้ newImage ถ้ามี ไม่งั้นใช้ currentImage
   const displayImage = newImage || currentImage || DEFAULT_IMAGE;
 
   return (

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Notification from "../login/components/LoginNotifications";
 
 export default function Register() {
   const [memberEmail, setEmail] = useState('');
@@ -12,10 +13,18 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // const [img, setProfileImage] = useState("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg");
   const DEFAULT_IMAGE = "https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg";
   const [img, setProfileImage] = useState(DEFAULT_IMAGE);
   const [errors, setErrors] = useState({ email: '', username: '', firstName: '', surname: '', password: '', confirmPassword: '' });
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  };
 
   const togglePassword = () => {
     setShowPassword(!showPassword);
@@ -25,39 +34,64 @@ export default function Register() {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (e.target.value === confirmPassword) {
+      setErrors(prev => ({...prev, confirmPassword: ''}));
+    }
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+    if (e.target.value === memberPassword) {
+      setErrors(prev => ({...prev, confirmPassword: ''}));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+      e.preventDefault();
 
-    let formErrors = { email: '', username: '', firstName: '', surname: '', password: '', confirmPassword: '' };
-    if (!memberEmail) {
-      formErrors.email = 'Email required!';
-    }
-    if (!username) {
-      formErrors.username = 'Username required!';
-    }
-    if (!memberName) {
-      formErrors.firstName = 'First name required!';
-    }
-    if (!memberLastname) {
-      formErrors.surname = 'Surname required!';
-    }
-    if (!memberPassword) {
-      formErrors.password = 'Password required!';
-    }
-    if (!confirmPassword) {
-      formErrors.confirmPassword = 'Confirm password!';
-    } else if (confirmPassword !== memberPassword) {
-      formErrors.confirmPassword = 'Passwords do not match';
-    }
+      let formErrors = { email: '', username: '', firstName: '', surname: '', password: '', confirmPassword: '' };
+      let hasErrors = false;
 
-    setErrors(formErrors);
+      if (!memberEmail) {
+        formErrors.email = 'Email required!';
+        hasErrors = true;
+      }
+      if (!username) {
+        formErrors.username = 'Username required!';
+        hasErrors = true;
+      }
+      if (!memberName) {
+        formErrors.firstName = 'First name required!';
+        hasErrors = true;
+      }
+      if (!memberLastname) {
+        formErrors.surname = 'Surname required!';
+        hasErrors = true;
+      }
+      if (!memberPassword) {
+        formErrors.password = 'Password required!';
+        hasErrors = true;
+      }
+      if (!confirmPassword) {
+        formErrors.confirmPassword = 'Confirm password!';
+        hasErrors = true;
+      }
+      
+      if (memberPassword && confirmPassword && memberPassword !== confirmPassword) {
+        formErrors.confirmPassword = 'Passwords do not match';
+        showNotification('Passwords do not match. Please try again.', 'error');
+        setErrors(formErrors);
+        return;
+      }
 
-    // Proceed with form submission if there are no errors
-    // if (!formErrors.email && !formErrors.username && !formErrors.firstName && !formErrors.surname && !formErrors.password && !formErrors.confirmPassword) {
-    //   // Perform form submission (e.g., API call)
-    // }
+      setErrors(formErrors);
 
-    if (Object.values(formErrors).every((field) => field === '')) {
+      if (hasErrors) {
+        return;
+      }
+
       try {
         const response = await fetch('http://localhost:9000/register', {
           method: 'POST',
@@ -74,27 +108,30 @@ export default function Register() {
           }),
         });
 
-
         if (!response.ok) {
-          // Handle error response
           const errorData = await response.json();
-          alert(`Error: ${errorData.message || 'Something went wrong!'}`);
+          showNotification(errorData.message || 'Registration failed. Please try again.', 'error');
         } else {
-          // Successful response
-          alert('Registration successful!');
-          // Optionally, redirect user to a login page
-          window.location.href = '/login';
+          showNotification('Registration successful! Redirecting to login...', 'success');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
         }
       } catch (error) {
         console.error('Error during registration:', error);
-        alert('Error: Could not complete registration.');
+        showNotification('Could not complete registration. Please try again.', 'error');
       }
-    }
   };
 
   return (
     <>
       <div className="flex h-screen customGray font-sans justify-center">
+        {notification && (
+          <Notification 
+            message={notification.message} 
+            type={notification.type} 
+          />
+        )}
         <div
           className="absolute inset-0"
           style={{
@@ -165,7 +202,7 @@ export default function Register() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
                     value={memberPassword}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     className="mt-0.5 p-2.5 w-full text-lg border border-slate-400 rounded-2xl focus:outline-customDarkBlue pr-12"
                   />
                   <button
@@ -189,7 +226,7 @@ export default function Register() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={handleConfirmPasswordChange}
                     className="mt-0.5 p-2.5 w-full text-lg border border-slate-400 rounded-2xl focus:outline-customDarkBlue pr-12"
                   />
                   <button
