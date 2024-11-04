@@ -1,155 +1,211 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { MdCheckBoxOutlineBlank } from "react-icons/md";
+
 import {
   DragDropContext,
   Droppable,
   Draggable,
   DropResult,
-  DroppableProvided,
-  DraggableProvided,
 } from "react-beautiful-dnd";
-import { useState } from "react";
+import Calendar from './Calendar';
 
-// mock data
-const currentUser = {
-  firstName: "Nichakann",
-  surName: "Nernngam",
-};
 
-const recentlyOpens = [
-  { type: "project", name: "Project name", href: "#" },
-  { type: "task", name: "Task name", href: "#", fromProject: "Project name" },
-  // More items...
-];
+interface KanBanResponse {
+  taskId: string;  // UUID
+  taskName: string;
+  projectName: string;
+  status: 'TODO' | 'PROGRESS' | 'DONE';
+}
 
-// Define task and state structure for Kanban
-interface Task {
-  id: string;
-  name: string;
-  fromProject: string;
+interface RecentlyViewResponse {
+  recentlyViewId: string;  // UUID
+  recentlyViewName: string;
+  viewId: string;  // UUID
+}
+
+interface HomeResponse {
+  tasks: KanBanResponse[];
+  recentlyViews: RecentlyViewResponse[];
 }
 
 interface TaskState {
-  todo: Task[];
-  inProgress: Task[];
-  done: Task[];
+  todo: KanBanResponse[];
+  progress: KanBanResponse[];
+  done: KanBanResponse[];
 }
 
+interface StoredUserData {
+  token: string;
+  memberId: string;
+  detail: {
+    memberEmail: string;
+    memberName: string;
+    username: string;
+  };
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
+
 export default function Homepage() {
-  // Initial Kanban task state
-  const [tasks, setTasks] = useState<TaskState>({
-    todo: [
-      {
-        id: "task-1",
-        name: "Task name",
-        fromProject: "Project name",
-      },
-      {
-        id: "task-2",
-        name: "Task name",
-        fromProject: "Project name",
-      },
-    ],
-    inProgress: [],
-    done: [],
+  const [homeData, setHomeData] = useState<{
+    tasks: TaskState;
+    recentlyViews: RecentlyViewResponse[];
+  }>({
+    tasks: {
+      todo: [],
+      progress: [],
+      done: [],
+    },
+    recentlyViews: [],
   });
+  const [userData, setUserData] = useState<StoredUserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Handle drag and drop
-  const onDragEnd = (result: DropResult) => {
-    const { destination, source } = result;
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 21 || hour < 6) return "Good night";
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
 
-    if (!destination) return; // If dropped outside a list
+  const getAuthHeader = (token: string): string => {
+    return token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+  };
 
-    const sourceCol = source.droppableId as keyof TaskState;
-    const destCol = destination.droppableId as keyof TaskState;
+  const fetchHomeData = async (userInfo: StoredUserData) => {
+    try {
+      console.log("before " + userInfo.token)
+      const response = await fetch(`${API_BASE_URL}/?m=${userInfo.memberId}`, {
+        headers: {
+          'Authorization': getAuthHeader(userInfo.token)
+        }
+      });
 
-    // If dropped within the same column
-    if (sourceCol === destCol) {
-      const newColumnTasks = Array.from(tasks[sourceCol]);
-      const [movedTask] = newColumnTasks.splice(source.index, 1);
-      newColumnTasks.splice(destination.index, 0, movedTask);
-      setTasks((prev) => ({ ...prev, [sourceCol]: newColumnTasks }));
+      if (!response.ok) {
+        throw new Error('Failed to fetch home data');
+      }
+
+      const data: HomeResponse = await response.json();
+
+      console.log(data)
+
+      const groupedTasks = {
+        todo: data.tasks.filter(task => task.status === 'TODO'),
+        progress: data.tasks.filter(task => task.status === 'PROGRESS'),
+        done: data.tasks.filter(task => task.status === 'DONE')
+      };
+
+      setHomeData({
+        tasks: groupedTasks,
+        recentlyViews: data.recentlyViews
+      });
+    } catch (err) {
+      console.error("Error fetching home data:", err);
+      setError(err instanceof Error ? err.message : "Failed to load home data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const storedData = localStorage.getItem("jwt");
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        if (!parsedData.detail?.memberEmail) {
+          throw new Error("Email not found in user data");
+        }
+        setUserData(parsedData);
+        fetchHomeData(parsedData);
+      } catch (error) {
+        console.error("Error parsing JWT data:", error);
+        window.location.href = '/login';
+      }
     } else {
-      // If dropped into a different column
-      const startColTasks = Array.from(tasks[sourceCol]);
-      const finishColTasks = Array.from(tasks[destCol]);
-      const [movedTask] = startColTasks.splice(source.index, 1);
-      finishColTasks.splice(destination.index, 0, movedTask);
+      window.location.href = '/login';
+    }
+  }, []);
 
-      setTasks((prev) => ({
+  const onDragEnd = async (result: DropResult) => {
+    if (!userData || !result.destination) return;
+
+    const { source, destination, draggableId } = result;
+
+    try {
+      const sourceCol = source.droppableId as keyof TaskState;
+      const destCol = destination.droppableId as keyof TaskState;
+
+      const newTasks = { ...homeData.tasks };
+      const [movedTask] = newTasks[sourceCol].splice(source.index, 1);
+      movedTask.status = destCol === 'todo' ? 'TODO' :
+        destCol === 'progress' ? 'PROGRESS' : 'DONE';
+      newTasks[destCol].splice(destination.index, 0, movedTask);
+
+      setHomeData(prev => ({
         ...prev,
-        [sourceCol]: startColTasks,
-        [destCol]: finishColTasks,
+        tasks: newTasks
       }));
+      
+
+      console.log(draggableId)
+      console.log(movedTask.status)
+      const response = await fetch(`${API_BASE_URL}/task/update-status?t=${draggableId}&s=${movedTask.status}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': getAuthHeader(userData.token),
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update task status');
+      }
+    } catch (err) {
+      console.error("Error updating task status:", err);
+      if (userData) {
+        await fetchHomeData(userData);
+      }
     }
   };
 
-  const getGreeting = (hour: number): string => {
-    if (hour >= 21 || hour < 6) {
-      return "Good night";
-    } else if (hour < 12) {
-      return "Good morning";
-    } else if (hour < 18) {
-      return "Good afternoon";
-    } else {
-      return "Good evening";
-    }
-  };
-
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: "Asia/Bangkok",
-    hour: "numeric",
-    minute: "numeric",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    weekday: "long",
-    hour12: false,
-  };
-
-  // Get the current date and time depending on options
-  const currentDate = new Date().toLocaleString("en-US", options);
-  // Create a Date object from the localized string (currentDate) to get the hour
-  const currentHour = new Date(currentDate).getHours();
-
-  const greetingMessage = getGreeting(currentHour);
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white pb-24 sm:pb-32">
-      {/* Greeting */}
-      <div className="mx-auto max-w-7xl lg:px-8">
-        <h2 className="text-left text-pretty text-2xl py-4 font-semibold text-gray-800">
-          {greetingMessage}, {currentUser.firstName}
-        </h2>
-      </div>
+    <div className="p-4">
+      <h1 className="text-2xl font-semibold mb-6">
+        {getGreeting()}, {userData?.detail.memberName}
+      </h1>
 
-      {/* Layout Grid */}
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-2 gap-8">
-        
-        {/* Recently Opened Section */}
-        <div className="relative bg-white rounded-lg p-6 overflow-hidden ring-1 ring-gray-200 hover:ring-gray-400">
-          <h3 className="text-lg font-semibold text-gray-800">Recents</h3>
-          <div className="mt-4 max-h-[250px] overflow-y-auto">
-            {recentlyOpens.map((item) => (
-              <Link key={item.name} href={item.href}>
-                <div className="hover:bg-gray-100 p-2 flex items-center space-x-4 cursor-pointer">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recently Viewed Section */}
+        <div className="bg-white rounded-lg p-6 shadow h-[300px] flex flex-col">
+          <h2 className="text-lg font-semibold mb-4">Recently visited</h2>
+          <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+            {homeData.recentlyViews.map((item) => (
+              <Link
+                href={`/project-board/${item.viewId}`}
+                key={item.recentlyViewId}
+              >
+                <div className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md">
                   <img
-                    src={
-                      item.type === "project"
-                        ? "/project-recent.svg"
-                        : "/task.svg"
-                    }
-                    alt={item.type}
-                    className="w-6"
+                    src="/project-recent.svg"
+                    alt="Project"
+                    className="w-5 h-5"
                   />
-                  <div>
-                    {item.name}
-                    {/*Note: inside the parentheses is alredy true, so we just check if item.type is true and show it*/}
-                    {item.type === "task" && (
-                      <span className="ml-2 text-gray-400">
-                        &gt; {item.fromProject}
-                      </span>
-                    )}
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {item.recentlyViewName}
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -157,74 +213,77 @@ export default function Homepage() {
           </div>
         </div>
 
-        {/* Kanban Section */}
-        <div className="relative bg-white shadow rounded-lg p-4 overflow-hidden lg:col-span-2 ring-1 ring-gray-200 hover:ring-gray-400">
-          <h3 className="text-lg font-semibold text-gray-800 text-left">
-            My Works
-          </h3>
-          <div className="mt-4">
-            <DragDropContext onDragEnd={onDragEnd}>
-              <div className="grid grid-cols-3 gap-4">
-                {["todo", "inProgress", "done"].map((col) => (
-                  <Droppable droppableId={col} key={col}>
-                    {(provided: DroppableProvided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className="p-4 bg-gray-200 rounded-lg h-[15rem] overflow-y-auto"
-                      >
-                        <div className="flex items-center text-center mb-6">
-                          <span
-                            className={`flex items-center justify-center text-sm font-semibold p-1 px-2 rounded-full text-white ${
-                              col === "todo"
-                                ? "bg-orange-400"
-                                : col === "inProgress"
-                                ? "bg-blue-400"
-                                : "bg-green-400"
-                            } whitespace-nowrap`}
-                          >
-                            <img src="todo.svg" alt={col} className="mr-2" />{" "}
-                            {col === "todo"
-                              ? "To Do"
-                              : col === "inProgress"
-                              ? "In Progress"
-                              : "Done"}
-                          </span>
-                        </div>
+        {/* Calendar Section */}
+        <div className="bg-white rounded-lg p-4 shadow h-[300px] flex flex-col">
+          <h2 className="text-lg font-semibold mb-2">Calendar</h2>
+          <div className="overflow-y-auto flex-1 pr-2">
+            <Calendar />
+          </div>
+        </div>
 
-                        {tasks[col as keyof TaskState].map((task, index) => (
+        {/* My Works Section */}
+        <div className="lg:col-span-3 bg-white rounded-lg p-6 shadow">
+          <h2 className="text-lg font-semibold mb-6">My Works</h2>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {(['todo', 'progress', 'done'] as const).map((column) => (
+                <Droppable droppableId={column} key={column}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className="bg-gray-50 rounded-lg p-4 flex flex-col h-[300px]"
+                    >
+                      <div className="flex items-center mb-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${column === 'todo'
+                              ? 'bg-orange-100 text-orange-600'
+                              : column === 'progress'
+                                ? 'bg-blue-100 text-blue-600'
+                                : 'bg-green-100 text-green-600'
+                            }`}
+                        >
+                          {column === 'todo'
+                            ? 'To Do'
+                            : column === 'progress'
+                              ? 'In Progress'
+                              : 'Done'}
+                        </span>
+                      </div>
+
+                      <div className="overflow-y-auto flex-1 pr-2">
+                        {homeData.tasks[column].map((task, index) => (
                           <Draggable
-                            key={task.id}
-                            draggableId={task.id}
+                            key={task.taskId}
+                            draggableId={task.taskId}
                             index={index}
                           >
-                            {(provided: DraggableProvided) => (
+                            {(provided) => (
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className="flex p-4 mt-2 bg-white rounded-lg shadow select-none hover:bg-gray-100"  // Prevent drag and highlight the content instead
+                                className="bg-white p-3 rounded-md shadow-sm mb-2"
                               >
-                                <span className="mr-2">
-                                  <img src="/task.svg" alt="Task" />
-                                </span>
-                                {task.name}
-                                <span className="ml-2 text-gray-400">
-                                  &gt; {task.fromProject}
-                                </span>
+                                <div className="flex items-center space-x-2">
+                                  <MdCheckBoxOutlineBlank size={12} className="text-indigo-500" />
+                                  <span className="font-medium">{task.taskName}</span>
+                                  <span className="text-sm text-gray-500">
+                                    from {task.projectName}
+                                  </span>
+                                </div>
                               </div>
                             )}
                           </Draggable>
                         ))}
-
                         {provided.placeholder}
                       </div>
-                    )}
-                  </Droppable>
-                ))}
-              </div>
-            </DragDropContext>
-          </div>
+                    </div>
+                  )}
+                </Droppable>
+              ))}
+            </div>
+          </DragDropContext>
         </div>
       </div>
     </div>
