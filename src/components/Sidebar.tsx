@@ -16,7 +16,6 @@ const profileNavigation = [
 
 const homeNavigation = [
   { name: 'Home', href: '/', iconPath: "/home.svg"},
-  { name: 'Dashboard', href: '/dashboard', iconPath: "/pie-chart.svg" },
   { name: 'Projects', href: '/project-board', iconPath: "/project.svg"},
 ];
 
