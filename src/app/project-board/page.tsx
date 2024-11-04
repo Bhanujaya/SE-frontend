@@ -274,6 +274,10 @@ export default function Project() {
     setUploadProgress(0);
   };
 
+  const formatProjectId = (projectId: string) => {
+    return `0x${projectId.replace(/-/g, '')}`;
+  };
+
   const convertToProjectProps = (project: ProjectResponse) => ({
     id: project.projectId,
     projectName: project.projectName,
@@ -303,10 +307,33 @@ export default function Project() {
         </div>
       )}
 
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 ml-16 mr-16">
+        {projects.map((project) => (
+          <Link key={project.projectId} href={`/project-board/${formatProjectId(project.projectId)}`}>
+            <div onClick={(e) => e.preventDefault()}>
+              <Projects {...convertToProjectProps(project)} />
+            </div>
+          </Link>
+        ))}
+
+        <div
+          className="bg-gray-50 shadow-3xl rounded-xl overflow-hidden w-56 h-72 relative flex justify-center items-center cursor-pointer hover:bg-gray-100"
+          onClick={() => setIsPanelOpen(true)}
+        >
+          <div className="flex items-center gap-2 text-stone-400">
+            <div className="text-xl">+</div>
+            <h1 className="text-xl font-semibold">New Project</h1>
+          </div>
+        </div>
+      </div> */}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 ml-16 mr-16">
         {projects.map((project) => (
-          <Link key={project.projectId} href={`/project-board/${project.projectId}`}>
-            <div onClick={(e) => e.preventDefault()}>
+          <Link
+            key={project.projectId}
+            href={`/project-board/${formatProjectId(project.projectId)}`}
+          >
+            <div>
               <Projects {...convertToProjectProps(project)} />
             </div>
           </Link>
