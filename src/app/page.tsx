@@ -76,6 +76,10 @@ export default function Homepage() {
     return token.startsWith('Bearer ') ? token : `Bearer ${token}`;
   };
 
+  const formatProjectId = (projectId: string) => {
+    return `0x${projectId.replace(/-/g, '')}`;
+  };
+
   const fetchHomeData = async (userInfo: StoredUserData) => {
     try {
       console.log("before " + userInfo.token)
@@ -193,7 +197,7 @@ export default function Homepage() {
           <div className="space-y-3 overflow-y-auto flex-1 pr-2">
             {homeData.recentlyViews.map((item) => (
               <Link
-                href={`/project-board/${item.viewId}`}
+                href={`/project-board/${formatProjectId(item.viewId)}`}
                 key={item.recentlyViewId}
               >
                 <div className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md">
