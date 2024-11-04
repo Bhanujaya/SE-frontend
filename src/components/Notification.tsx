@@ -452,7 +452,7 @@ const NotificationComponent = () => {
                       <span className="font-medium">Owner</span>
                       {notification.type === 'TASK' ? ' has added you to the meeting ' : ' invites you to the project '}
                       <span className="font-medium">
-                        {notification.notificationDetail.split(' ').pop()}
+                        {notification.notificationDetail?.split(' ').pop()}
                       </span>
                       <span>.</span>
                     </p>
