@@ -101,8 +101,21 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
   }, [meetings]);
 
 
+
+
   // Function to remove a meeting
   const handleRemoveMeeting = async (meetingId: string) => {
+
+    
+    const meetingData = {
+
+      meetingId: meetingId,
+      meetingProjectId: currentProject?.project.projectId,
+
+    };
+
+    console.log('meetingData', meetingData)
+
     try {
       const userData = localStorage.getItem("jwt");
       if (!userData) throw new Error("No token found");
@@ -115,7 +128,7 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ meetingId }), // Adjust request body format as needed
+        body: JSON.stringify(meetingData), // Adjust request body format as needed
       });
   
       if (response.ok) {

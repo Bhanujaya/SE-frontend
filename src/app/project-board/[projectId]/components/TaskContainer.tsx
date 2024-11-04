@@ -14,7 +14,7 @@ interface Task {
   taskStatus: string;
   taskProjectId: string;
   taskComments: any[]; // Adjust type as needed
-  taskParticipants: any[]; // Adjust type as needed
+  taskParticipants: Member[]; // Adjust type as needed
   taskDueDate: string;
 }
 
@@ -65,6 +65,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   
+  const projectId = currentProject?.project.projectId;
 
   useEffect(() => {
     
@@ -146,16 +147,17 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
 
     if (!token) {
       console.error("Token not found");
+
       return;
     }
 
-    const taskData = {
-      projectId: currentProject?.project.projectId,
-      taskId: selectedTaskForDelete?.taskId,
+    // const taskData = {
+    //   projectId: currentProject?.project.projectId,
+    //   taskId: selectedTaskForDelete?.taskId,
       
-    };
+    // };
 
-    console.log('taskData', taskData)
+    // console.log('taskData', taskData)
     
     try {
       const response = await fetch(`http://localhost:9000/task/delete?p=${projectId}&t=${taskId}`, {
@@ -164,7 +166,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`, // Include token for authorization
         },
-        body: JSON.stringify(taskData)
+        // body: JSON.stringify(taskData)
       });
       if (response.ok) {
         const responseData = await response.json();
@@ -241,6 +243,8 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
     setSelectedTaskForDetails(null);
   };
   
+  
+
   return (
     <>
       <div className="relative bg-white rounded-lg py-4 pr-24 pl-12 lg:col-span-2">
@@ -272,10 +276,14 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                 <tr
                   key={index}
                   className="hover:bg-gray-100 group border-b border-gray-300 items-center text-sm"
-                  onClick={() => handleOpenTaskDetails(task)}
+                  // onClick={() => handleOpenTaskDetails(task)}
                 >
                   {/* Name column */}
-                  <td className="flex sticky left-0 bg-white z-10 group-hover:bg-gray-100 min-w-[200px] font-semibold">
+                  <td
+                    className="flex sticky left-0 bg-white z-10 group-hover:bg-gray-100 min-w-[200px] font-semibold"
+                    onClick={() => handleOpenTaskDetails(task)}
+                  >
+                    
                     <div className="p-4 flex items-center w-full">
                       <img src="/task.svg" alt="Task" className="min-w-min min-h-min mr-2" />
                       {task.taskName}
@@ -283,7 +291,32 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                   </td>
 
                   {/* Assignee */}
-                  <td className="p-3"></td>
+                  <td className="p-3">
+                    <div className="flex items-center">
+                      {task.taskParticipants &&
+                        task.taskParticipants.slice(0, 3).map((participant) => (
+                          <img
+                            key={participant.memberId}
+                            src={
+                              participant.detail && participant.detail.img
+                                ? participant.detail.img
+                                : "https://via.placeholder.com/40"
+                            }
+                            alt={
+                              participant.detail
+                                ? `${participant.detail.memberName}'s profile`
+                                : "Participant profile"
+                            }
+                            className="w-6 h-6 rounded-full mr-1"
+                          />
+                        ))}
+                      {task.taskParticipants && task.taskParticipants.length > 3 && (
+                        <div className="w-6 h-6 rounded-full bg-gray-300 text-xs text-gray-700 flex items-center justify-center">
+                          +{task.taskParticipants.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  </td>
 
                   {/* Due Date */}
                   <td className="p-3">{new Date(task.taskDueDate).toLocaleDateString("en-TH")}</td>
@@ -392,6 +425,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
       {/* Task Details Popup */}
       {selectedTaskForDetails && (
         <TaskDetailsPopup
+          currentProject={currentProject}
           task={selectedTaskForDetails}
           isVisible={true}
           onClose={() => setSelectedTaskForDetails(null)}
@@ -401,6 +435,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
 
       {/* Add Task Popup */}
       <AddTaskPopup
+        // projectId={projectId}
         isVisible={isTaskPopupVisible}
         onClose={() => setIsTaskPopupVisible(false)}
         onAddTask={handleAddTask}

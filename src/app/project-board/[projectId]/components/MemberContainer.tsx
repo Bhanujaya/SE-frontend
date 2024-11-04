@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { TfiClose } from "react-icons/tfi";
-import AddMemberPopup from "./AddMemberProject";
+import AddMemberPopup from "./AddMemberPopup";
 
 interface MemberData {
   memberId: string;
@@ -48,6 +48,7 @@ interface ProjectDetail {
   projectImg: string;
 
 }
+
 
 interface Project {
   project: ProjectDetail;
@@ -122,9 +123,42 @@ export default function MemberContainer({ currentProject }: MemberContainerProps
 
 
   // Function to remove a member
-  const handleRemoveMember = (memberId: string) => {
-    const updatedMembers = members.filter((member) => member.memberId !== memberId);
-    setMembers(updatedMembers);
+  const handleRemoveMember = async (memberId: string) => {
+    const projectId = currentProject?.project.projectId
+    const memberData = {
+      projectId: projectId,
+      memberId: memberId,
+      role: 'member',
+
+    };
+
+    console.log('memberData', memberData)
+
+    try {
+      const userData = localStorage.getItem("jwt");
+      if (!userData) throw new Error("No token found");
+  
+      const { token } = JSON.parse(userData);
+      console.log('token being sent:',token)
+      const response = await fetch(`http://localhost:9000/${projectId}/unassign`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(memberData), // Adjust request body format as needed
+      });
+  
+      if (response.ok) {
+        // Update state to reflect member removal
+        setMembers((prevMembers) => prevMembers.filter((member) => member.memberId !== memberId));
+        console.log("Member deleted successfully");
+      } else {
+        console.error("Failed to delete member:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error deleting member:", error);
+    }
   };
 
   // Function to add a new member (for simplicity, a placeholder member is added)
@@ -251,7 +285,12 @@ export default function MemberContainer({ currentProject }: MemberContainerProps
                   
                   
                   <td className="p-3">
-
+                    <button
+                      className="hover:bg-gray-100 rounded-md p-1"
+                      onClick={() => handleRemoveMember(member.memberId)}
+                    >
+                      <TfiClose className="w-4 h-4 text-gray-800" />
+                    </button>
 
                   </td>
 

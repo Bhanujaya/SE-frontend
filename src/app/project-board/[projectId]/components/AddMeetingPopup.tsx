@@ -2,16 +2,19 @@ import { useState } from "react";
 import { TfiClose } from "react-icons/tfi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FaCalendarAlt } from 'react-icons/fa';
-import CommentModal from "./CommentModal";  
-import { AddMemberPopup } from "@/app/test/components/addmember";
+import { FaCalendarAlt } from "react-icons/fa";
+import CommentModal from "./CommentModal";
+import AddMemberPopup from "@/app/project-board/[projectId]/components/addmember";
 import { IoLocationOutline } from "react-icons/io5";
-
 
 interface AddMeetingPopupProps {
   isVisible: boolean;
   onClose: () => void;
-  onAddMeeting: (meetingName: string, meetingDescription: string, dueDate: Date | null) => void;
+  onAddMeeting: (
+    meetingName: string,
+    meetingDescription: string,
+    dueDate: Date | null
+  ) => void;
 }
 
 interface Comment {
@@ -20,29 +23,33 @@ interface Comment {
   time: string;
 }
 
-const AddmeetingPopup = ({ isVisible, onClose, onAddMeeting }: AddMeetingPopupProps) => {
+const AddmeetingPopup = ({
+  isVisible,
+  onClose,
+  onAddMeeting,
+}: AddMeetingPopupProps) => {
   const [meetingTopic, setMeetingTopic] = useState("");
   const [meetingLocation, setMeetingLocation] = useState("");
-  const [imgSrc, setImgSrc] = useState("/undo.svg"); 
+  const [imgSrc, setImgSrc] = useState("/undo.svg");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // const [comments, setComments] = useState<Comment[]>([]);
   // const [meetingDueDate, setmeetingDueDate] = useState("")
-  
+
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [showAddMemberPopup, setShowAddMemberPopup] = useState(false);
 
-  const [errors, setErrors] = useState({ meetingTopic: '', selectedDate: '' });
+  const [errors, setErrors] = useState({ meetingTopic: "", selectedDate: "" });
 
   // const handleStatusChange = (status: string) => {
   //   setMeetingStatus(status);
   //   setImgSrc("/todo.svg");
   // };
 
-  let formErrors = { meetingTopic: '', selectedDate: '' };
+  let formErrors = { meetingTopic: "", selectedDate: "" };
 
   const handleAddMeeting = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     // handle token
     const tokenData = localStorage.getItem("jwt");
     const parsedTokenData = tokenData ? JSON.parse(tokenData) : null;
@@ -54,61 +61,59 @@ const AddmeetingPopup = ({ isVisible, onClose, onAddMeeting }: AddMeetingPopupPr
     }
 
     if (!meetingTopic) {
-      setErrors({ ...errors, meetingTopic: 'meeting name required!' });
+      setErrors({ ...errors, meetingTopic: "meeting name required!" });
       return; // Don't proceed if there are errors
     } else {
-      setErrors({ ...errors, meetingTopic: '' }); // Clear errors if the meeting name is valid
+      setErrors({ ...errors, meetingTopic: "" }); // Clear errors if the meeting name is valid
     }
 
     // setErrors(formErrors)
 
-    console.log(formErrors.meetingTopic)
-        // Check if there are any form errors
+    console.log(formErrors.meetingTopic);
+    // Check if there are any form errors
 
-    const projectId = "6292753c-273d-4d53-a0d7-f4e0b377260e"  // dynamic projectId later
+    const projectId = "2a5cf408-ce79-44b0-8ba9-97c48284c77d	"; // dynamic projectId later
     const meetingData = {
       meetingTopic: meetingTopic,
       meetingLocation: meetingLocation,
       meetingDate: selectedDate ? selectedDate.toISOString() : null, // Format the date to ISO string
       meetingProjectId: projectId,
     };
-    
-    
-      // Perform form submission (e.g., API call)
-      
-      try {
-        console.log('Token being sent:', token);
-        const response = await fetch("http://localhost:9000/meeting/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`, // include token if needed
-          },
-          body: JSON.stringify(meetingData)
-        });
 
-        if (response.ok) {
-          const responseData = await response.json();
-          console.log("meeting created successfully:", responseData);
-          onAddMeeting(meetingTopic, meetingLocation, selectedDate); // Notify parent component
-          handleClose(); // Reset form and close popup
-          window.location.reload();
-        } else {
-          // handle error response
-          const errorData = await response.json();
-          console.error("Failed to create meeting:", errorData);
-        }
-      } catch (error) {
-        console.error("Error creating meeting:", error);
+    // Perform form submission (e.g., API call)
+
+    try {
+      console.log("Token being sent:", token);
+      const response = await fetch("http://localhost:9000/meeting/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // include token if needed
+        },
+        body: JSON.stringify(meetingData),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log("meeting created successfully:", responseData);
+        onAddMeeting(meetingTopic, meetingLocation, selectedDate); // Notify parent component
+        handleClose(); // Reset form and close popup
+        window.location.reload();
+      } else {
+        // handle error response
+        const errorData = await response.json();
+        console.error("Failed to create meeting:", errorData);
       }
-    
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+    }
   };
-  
+
   const handleClose = () => {
     setMeetingTopic("");
     setMeetingLocation("");
     setSelectedDate(null);
-    setShowAddMemberPopup(true); 
+    setShowAddMemberPopup(true);
 
     onClose();
   };
@@ -118,7 +123,7 @@ const AddmeetingPopup = ({ isVisible, onClose, onAddMeeting }: AddMeetingPopupPr
   // };
 
   const handleCommentClick = () => {
-    setShowCommentModal(true); 
+    setShowCommentModal(true);
   };
 
   const openAddMemberPopup = () => {
@@ -126,26 +131,26 @@ const AddmeetingPopup = ({ isVisible, onClose, onAddMeeting }: AddMeetingPopupPr
   };
 
   const handleCancelClick = () => {
-    setShowAddMemberPopup(false); 
+    setShowAddMemberPopup(false);
   };
 
   const handleDoneClick = () => {
-    setShowAddMemberPopup(false); 
+    setShowAddMemberPopup(false);
   };
 
   if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-40">
-      
-      <form className="bg-white p-6 rounded-2xl shadow-lg z-50 w-6/12 relative" onSubmit={handleAddMeeting}>
-        
+      <form
+        className="bg-white p-6 rounded-2xl shadow-lg z-50 w-6/12 relative"
+        onSubmit={handleAddMeeting}
+      >
         {/* x close button */}
         <div className="absolute top-2 right-2 flex gap-2">
-        <button type="button" className="text-gray-500" onClick={handleClose}>
-          <TfiClose className="w-4 h-4 text-gray-800 mr-2 mt-2" />
-        </button>
-
+          <button type="button" className="text-gray-500" onClick={handleClose}>
+            <TfiClose className="w-4 h-4 text-gray-800 mr-2 mt-2" />
+          </button>
         </div>
 
         <input
@@ -156,8 +161,10 @@ const AddmeetingPopup = ({ isVisible, onClose, onAddMeeting }: AddMeetingPopupPr
           onChange={(e) => setMeetingTopic(e.target.value)}
           className="mb-2 mt-2 p-2 text-xl rounded focus:border-transparent focus:outline-none"
         />
-        {errors.meetingTopic && <p className="eMessage">{errors.meetingTopic}</p>}
-        
+        {errors.meetingTopic && (
+          <p className="eMessage">{errors.meetingTopic}</p>
+        )}
+
         <div className="mb-2 ml-1 flex gap-0.5 items-center">
           <IoLocationOutline size={20} />
           <input
@@ -195,7 +202,6 @@ const AddmeetingPopup = ({ isVisible, onClose, onAddMeeting }: AddMeetingPopupPr
           </button>
         </div>
       </form>
-
     </div>
   );
 };
