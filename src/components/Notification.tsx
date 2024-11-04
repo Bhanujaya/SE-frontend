@@ -373,10 +373,15 @@ const NotificationComponent = () => {
     }
   };
 
+
+  const formatProjectId = (projectId: string) => {
+    return `0x${projectId.replace(/-/g, '')}`;
+  };
+
   const getNotificationHref = (notification: Notification) => {
     switch (notification.type) {
       case 'PROJECT':
-        return notification.projectId ? `/project-board/${notification.projectId}` : '#';
+        return notification.projectId ? `/project-board/${formatProjectId(notification.projectId)}` : '#';
       case 'TASK':
         return notification.taskId ? `/task/${notification.taskId}` : '#';
       case 'MEETING':
