@@ -1,6 +1,7 @@
+// MeetingContainer.tsx
+
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { TfiClose } from "react-icons/tfi";
 import AddMeetingPopup from "./AddMeetingPopup";
@@ -12,18 +13,6 @@ interface Meeting {
   meetingLocation: string;
   meetingProjectId: string;
 }
-
-// interface ProjectOwner {
-//   token: string | null;
-//   memberId: string;
-//   detail: {
-//     memberEmail: string;
-//     memberName: string;
-//     memberLastname: string;
-//     username: string;
-//     img: string;
-//   };
-// }
 
 interface MemberDetail {
   memberEmail: string;
@@ -46,95 +35,65 @@ interface ProjectDetail {
   projectFav: string;
   projectOwner: Member;
   projectImg: string;
-
 }
 
 interface Project {
   project: ProjectDetail;
   tasks: any[];
   assigns: any[];
-  meetings: any[];
+  meetings: Meeting[];
   logs: any[];
-
 }
 
 interface MeetingContainerProps {
   currentProject: Project | null;
+  onProjectDataChange: () => void;
 }
 
-// ------------------ Mock data ------------------
-
-// const meetingsData: Meeting[] = [
-//   {
-//     id: "1",
-//     topic: "Meeting 1",
-//     date: "20/06/24",
-//     location: "Bankhen",
-//     projectId: "1",
-//   },
-//   {
-//     id: "2",
-//     topic: "Meeting 2",
-//     date: "02/07/24",
-//     location: "Teenoi",
-//     projectId: "1",
-//   },
-// ];
-
-// -----------------------------------------------
-
-export default function MeetingContainer({ currentProject }: MeetingContainerProps) {
+export default function MeetingContainer({
+  currentProject,
+  onProjectDataChange,
+}: MeetingContainerProps) {
   const [meetings, setMeetings] = useState<Meeting[]>(currentProject?.meetings || []);
-  const [isMeetingPopupVisible, setIsMeetingPopupVisible] = useState(false)
+  const [isMeetingPopupVisible, setIsMeetingPopupVisible] = useState(false);
 
   useEffect(() => {
     if (currentProject) {
-      // console.log('currentProj', currentProj)
-      setMeetings(currentProject.meetings);    
-    } 
-    
-  }, [currentProject]); // Re-run the filter when projectId changes
+      setMeetings(currentProject.meetings);
+    }
+  }, [currentProject]);
 
-  useEffect(() => {
-    console.log('meetings:', meetings);
-    
-  }, [meetings]);
-
-
-
-
-  // Function to remove a meeting
   const handleRemoveMeeting = async (meetingId: string) => {
+    const projectId = currentProject?.project.projectId;
 
-    
+    if (!projectId) {
+      console.error("Project ID is not available");
+      return;
+    }
+
     const meetingData = {
-
       meetingId: meetingId,
-      meetingProjectId: currentProject?.project.projectId,
-
+      meetingProjectId: projectId,
     };
-
-    console.log('meetingData', meetingData)
 
     try {
       const userData = localStorage.getItem("jwt");
       if (!userData) throw new Error("No token found");
-  
+
       const { token } = JSON.parse(userData);
-      console.log('token being sent:',token)
+      console.log("Token being sent:", token);
       const response = await fetch("http://localhost:9000/meeting/delete", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(meetingData), // Adjust request body format as needed
+        body: JSON.stringify(meetingData),
       });
-  
+
       if (response.ok) {
-        // Update state to reflect meeting removal
-        setMeetings((prevMeetings) => prevMeetings.filter((meeting) => meeting.meetingId !== meetingId));
         console.log("Meeting deleted successfully");
+        onProjectDataChange(); // Refresh project data to update meetings list
       } else {
         console.error("Failed to delete meeting:", response.statusText);
       }
@@ -143,19 +102,21 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
     }
   };
 
-  // Function to add a new meeting
-  const handleAddMeeting = (meetingName: string, meetingDescription: string) => {
-    console.log("meeting Added:", meetingName, meetingDescription);
-    // Logic to add the meeting to the project goes here
+  const handleAddMeeting = (newMeeting: Meeting) => {
+    console.log("Meeting Added:", newMeeting);
+    // Update the meetings state with the new meeting
+    setMeetings((prevMeetings) => [...prevMeetings, newMeeting]);
   };
 
   const handleToggleMeetingPopup = () => {
     setIsMeetingPopupVisible(!isMeetingPopupVisible);
   };
 
+  const projectId = currentProject?.project.projectId;
+
   return (
     <>
-      {/*Header*/}
+      {/* Header */}
       <div className="flex items-center justify-between p-2">
         <div className="flex items-center">
           <img src="/calendar.svg" alt="Calendar" className="mr-2" />
@@ -179,6 +140,7 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
               <tr className="text-gray-400 text-left text-sm ">
                 <th className="p-3 font-normal">Name</th>
                 <th className="p-3 font-normal">Date</th>
+                <th className="p-3 font-normal"></th>
               </tr>
             </thead>
             <tbody>
@@ -189,7 +151,11 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
                     <span className="py-1">{meeting.meetingTopic}</span>
                   </td>
                   {/* Date */}
-                  <td className="p-3">{new Date(meeting.meetingDate).toLocaleDateString("en-TH")}</td>
+                  <td className="p-3">
+                    {meeting.meetingDate
+                      ? new Date(meeting.meetingDate).toLocaleDateString("en-TH")
+                      : "-"}
+                  </td>
 
                   <td className="p-3">
                     <button
@@ -202,7 +168,7 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
                 </tr>
               ))}
 
-              {/* Add Member Button Row */}
+              {/* Add Meeting Button Row */}
               <tr className="text-sm">
                 <td colSpan={3}>
                   <button
@@ -210,8 +176,7 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
                     onClick={handleToggleMeetingPopup}
                   >
                     <div className="flex items-center ml-2">
-                      <span className="text-2xl font-light pb-1 mr-2">+</span>{" "}
-                      Add Meeting
+                      <span className="text-2xl font-light pb-1 mr-2">+</span> Add Meeting
                     </div>
                   </button>
                 </td>
@@ -220,14 +185,16 @@ export default function MeetingContainer({ currentProject }: MeetingContainerPro
           </table>
         </div>
       </div>
-    
-      {/* Add meeting Popup */}
-      <AddMeetingPopup
-        isVisible={isMeetingPopupVisible}
-        onClose={() => setIsMeetingPopupVisible(false)}
-        onAddMeeting={handleAddMeeting}
-      />
-    
+
+      {/* Add Meeting Popup */}
+      {projectId && (
+        <AddMeetingPopup
+          projectId={projectId}
+          isVisible={isMeetingPopupVisible}
+          onClose={() => setIsMeetingPopupVisible(false)}
+          onAddMeeting={handleAddMeeting}
+        />
+      )}
     </>
   );
 }

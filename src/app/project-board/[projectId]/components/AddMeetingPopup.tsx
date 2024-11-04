@@ -1,56 +1,42 @@
+// AddMeetingPopup.tsx
+
 import { useState } from "react";
 import { TfiClose } from "react-icons/tfi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaCalendarAlt } from "react-icons/fa";
-import CommentModal from "./CommentModal";
-import AddMemberPopup from "@/app/project-board/[projectId]/components/addmember";
 import { IoLocationOutline } from "react-icons/io5";
 
 interface AddMeetingPopupProps {
+  projectId: string;
   isVisible: boolean;
   onClose: () => void;
-  onAddMeeting: (
-    meetingName: string,
-    meetingDescription: string,
-    dueDate: Date | null
-  ) => void;
+  onAddMeeting: (newMeeting: Meeting) => void;
 }
 
-interface Comment {
-  name: string;
-  text: string;
-  time: string;
+interface Meeting {
+  meetingId: string;
+  meetingTopic: string;
+  meetingDate: string;
+  meetingLocation: string;
+  meetingProjectId: string;
 }
 
-const AddmeetingPopup = ({
+const AddMeetingPopup = ({
+  projectId,
   isVisible,
   onClose,
   onAddMeeting,
 }: AddMeetingPopupProps) => {
   const [meetingTopic, setMeetingTopic] = useState("");
   const [meetingLocation, setMeetingLocation] = useState("");
-  const [imgSrc, setImgSrc] = useState("/undo.svg");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  // const [comments, setComments] = useState<Comment[]>([]);
-  // const [meetingDueDate, setmeetingDueDate] = useState("")
-
-  const [showCommentModal, setShowCommentModal] = useState(false);
-  const [showAddMemberPopup, setShowAddMemberPopup] = useState(false);
-
   const [errors, setErrors] = useState({ meetingTopic: "", selectedDate: "" });
-
-  // const handleStatusChange = (status: string) => {
-  //   setMeetingStatus(status);
-  //   setImgSrc("/todo.svg");
-  // };
-
-  let formErrors = { meetingTopic: "", selectedDate: "" };
 
   const handleAddMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // handle token
+    // Handle token
     const tokenData = localStorage.getItem("jwt");
     const parsedTokenData = tokenData ? JSON.parse(tokenData) : null;
     const token = parsedTokenData ? parsedTokenData.token : "";
@@ -61,26 +47,18 @@ const AddmeetingPopup = ({
     }
 
     if (!meetingTopic) {
-      setErrors({ ...errors, meetingTopic: "meeting name required!" });
-      return; // Don't proceed if there are errors
+      setErrors({ ...errors, meetingTopic: "Meeting topic is required!" });
+      return;
     } else {
-      setErrors({ ...errors, meetingTopic: "" }); // Clear errors if the meeting name is valid
+      setErrors({ ...errors, meetingTopic: "" });
     }
 
-    // setErrors(formErrors)
-
-    console.log(formErrors.meetingTopic);
-    // Check if there are any form errors
-
-    const projectId = "2a5cf408-ce79-44b0-8ba9-97c48284c77d	"; // dynamic projectId later
     const meetingData = {
       meetingTopic: meetingTopic,
       meetingLocation: meetingLocation,
-      meetingDate: selectedDate ? selectedDate.toISOString() : null, // Format the date to ISO string
+      meetingDate: selectedDate ? selectedDate.toISOString() : null,
       meetingProjectId: projectId,
     };
-
-    // Perform form submission (e.g., API call)
 
     try {
       console.log("Token being sent:", token);
@@ -88,19 +66,18 @@ const AddmeetingPopup = ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // include token if needed
+          Authorization: `Bearer ${token}`, // Include token if needed
         },
         body: JSON.stringify(meetingData),
       });
 
       if (response.ok) {
-        const responseData = await response.json();
-        console.log("meeting created successfully:", responseData);
-        onAddMeeting(meetingTopic, meetingLocation, selectedDate); // Notify parent component
+        const responseData: Meeting = await response.json();
+        console.log("Meeting created successfully:", responseData);
+        onAddMeeting(responseData); // Pass the new meeting data back to parent
         handleClose(); // Reset form and close popup
-        window.location.reload();
       } else {
-        // handle error response
+        // Handle error response
         const errorData = await response.json();
         console.error("Failed to create meeting:", errorData);
       }
@@ -113,29 +90,7 @@ const AddmeetingPopup = ({
     setMeetingTopic("");
     setMeetingLocation("");
     setSelectedDate(null);
-    setShowAddMemberPopup(true);
-
     onClose();
-  };
-
-  // const handleSendComment = (newComment: Comment) => {
-  //   setComments([...comments, newComment]);
-  // };
-
-  const handleCommentClick = () => {
-    setShowCommentModal(true);
-  };
-
-  const openAddMemberPopup = () => {
-    setShowAddMemberPopup(true);
-  };
-
-  const handleCancelClick = () => {
-    setShowAddMemberPopup(false);
-  };
-
-  const handleDoneClick = () => {
-    setShowAddMemberPopup(false);
   };
 
   if (!isVisible) return null;
@@ -146,7 +101,7 @@ const AddmeetingPopup = ({
         className="bg-white p-6 rounded-2xl shadow-lg z-50 w-6/12 relative"
         onSubmit={handleAddMeeting}
       >
-        {/* x close button */}
+        {/* Close button */}
         <div className="absolute top-2 right-2 flex gap-2">
           <button type="button" className="text-gray-500" onClick={handleClose}>
             <TfiClose className="w-4 h-4 text-gray-800 mr-2 mt-2" />
@@ -155,7 +110,7 @@ const AddmeetingPopup = ({
 
         <input
           type="text"
-          placeholder="meeting Name"
+          placeholder="Meeting Topic"
           value={meetingTopic}
           maxLength={20}
           onChange={(e) => setMeetingTopic(e.target.value)}
@@ -169,6 +124,8 @@ const AddmeetingPopup = ({
           <IoLocationOutline size={20} />
           <input
             type="text"
+            value={meetingLocation}
+            onChange={(e) => setMeetingLocation(e.target.value)}
             className="w-full p-2 text-base rounded placeholder-slate-500 focus:border-transparent focus:outline-none"
             placeholder="Location"
             maxLength={40}
@@ -195,7 +152,6 @@ const AddmeetingPopup = ({
         <div className="flex justify-end gap-2">
           <button
             type="submit"
-            // onClick={handleAddmeeting}
             className="text-white text-sm mt-5 bg-customPurple hover:bg-[#8182d1] rounded-lg h-9 w-24"
           >
             Save
@@ -206,4 +162,4 @@ const AddmeetingPopup = ({
   );
 };
 
-export default AddmeetingPopup;
+export default AddMeetingPopup;

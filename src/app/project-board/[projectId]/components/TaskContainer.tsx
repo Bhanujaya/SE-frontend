@@ -1,11 +1,11 @@
+// TaskContainer.tsx
+
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import CommentModal from "./CommentModal";
 import AddTaskPopup from "./AddTaskPopup";
-import TaskDetailsPopup from './TaskDetailsPopup'
-
+import TaskDetailsPopup from "./TaskDetailsPopup";
 
 interface Task {
   taskId: string;
@@ -39,7 +39,6 @@ interface ProjectDetail {
   projectFav: string;
   projectOwner: Member;
   projectImg: string;
-
 }
 
 interface Project {
@@ -48,14 +47,11 @@ interface Project {
   assigns: any[];
   meetings: any[];
   logs: any[];
-
 }
 
 interface TaskContainerProps {
   currentProject: Project | null;
 }
-
-// -----------------------------------------------
 
 export default function TaskContainer({ currentProject }: TaskContainerProps) {
   const [tasks, setTasks] = useState<Task[]>(currentProject?.tasks || []);
@@ -64,37 +60,19 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
   const [selectedTaskForDelete, setSelectedTaskForDelete] = useState<Task | null>(null);
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
-  
+
   const projectId = currentProject?.project.projectId;
 
   useEffect(() => {
-    
-    // Filter tasks based on projectId
     if (currentProject) {
-      // console.log('currentProject in TaskContainer:', currentProject)
-      // const tasks = currentProject.tasks;
-      // console.log('tasks', tasks)
-      
-      console.log('tasks in current project: ', currentProject.tasks)
-      const currentTasks = currentProject.tasks; 
+      console.log("tasks in current project: ", currentProject.tasks);
+      const currentTasks = currentProject.tasks;
       setTasks(currentTasks);
-      // console.log('currentProject:', currentProject)
-
-      console.log('currentTasks after setTasks:', currentTasks)
-      console.log('tasks after setTasks:', tasks)
-
-
-    } 
-
-    
+    }
   }, [currentProject]);
 
-  
-  const [modalPosition, setModalPosition] = useState<{ top: number; left: number; }>({ top: 0, left: 0 });
-  const [deleteModalPosition, setDeleteModalPosition] = useState<{ top: number; left: number; }>({ top: 0, left: 0 });
-  {
-    /* Handle Comment Modal */
-  }
+  const [modalPosition, setModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [deleteModalPosition, setDeleteModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   const handleOpenCommentModal = (task: Task, event: React.MouseEvent) => {
     const buttonRect = (event.target as HTMLElement).getBoundingClientRect();
@@ -104,9 +82,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
       left: buttonRect.left,
     });
 
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth;
-
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
     document.body.style.paddingRight = `${scrollbarWidth}px`;
   };
@@ -117,17 +93,14 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
     document.body.style.paddingRight = "0px";
   };
 
-  const handleSendComment = (newComment: {
-    name: string;
-    text: string;
-    time: string;
-  }) => {
+  const handleSendComment = (newComment: { name: string; text: string; time: string }) => {
     if (selectedTask) {
       const updatedTasks = tasks.map((task) =>
-        task.taskName === selectedTask.taskName
-          ? { ...task, comments: [...task.taskComments, newComment] }
+        task.taskId === selectedTask.taskId
+          ? { ...task, taskComments: [...task.taskComments, newComment] }
           : task
       );
+      setTasks(updatedTasks);
       setSelectedTask({
         ...selectedTask,
         taskComments: [...selectedTask.taskComments, newComment],
@@ -135,45 +108,35 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
     }
   };
 
-
   // Function to call the delete endpoint
   const deleteTask = async (projectId: string, taskId: string) => {
-    
     // handle token
     const tokenData = localStorage.getItem("jwt");
     const parsedTokenData = tokenData ? JSON.parse(tokenData) : null;
     const token = parsedTokenData ? parsedTokenData.token : "";
-    console.log('token for delete:', token)
+    console.log("token for delete:", token);
 
     if (!token) {
       console.error("Token not found");
-
       return;
     }
 
-    // const taskData = {
-    //   projectId: currentProject?.project.projectId,
-    //   taskId: selectedTaskForDelete?.taskId,
-      
-    // };
-
-    // console.log('taskData', taskData)
-    
     try {
-      const response = await fetch(`http://localhost:9000/task/delete?p=${projectId}&t=${taskId}`, {
-        method: "DELETE",
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Include token for authorization
-        },
-        // body: JSON.stringify(taskData)
-      });
+      const response = await fetch(
+        `http://localhost:9000/task/delete?p=${projectId}&t=${taskId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Include token for authorization
+          },
+        }
+      );
       if (response.ok) {
         const responseData = await response.json();
         console.log("Task deleted:", responseData);
         setTasks((prevTasks) => prevTasks.filter((task) => task.taskId !== taskId));
-        // setSelectedTaskForDelete(null);
-        handleCloseDeleteModal()
+        handleCloseDeleteModal();
       } else {
         console.error("Failed to delete task");
       }
@@ -184,14 +147,8 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
 
   // Update the task list by removing the selected task
   const handleDeleteTask = () => {
-    if (selectedTaskForDelete && currentProject) {
-      // setTasks((prevTasks) =>
-      //   prevTasks.filter((task) => task.taskName !== selectedTaskForDelete.taskName)
-      // );
-
-      deleteTask(currentProject.project.projectId, selectedTaskForDelete.taskId);
-      // console.log('id:', currentProject.project.projectId, selectedTaskForDelete.taskId)
-
+    if (selectedTaskForDelete && projectId) {
+      deleteTask(projectId, selectedTaskForDelete.taskId);
       handleCloseDeleteModal();
     }
   };
@@ -204,8 +161,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
       left: buttonRect.left,
     });
 
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
     document.body.style.paddingRight = `${scrollbarWidth}px`;
   };
@@ -216,14 +172,13 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
     document.body.style.paddingRight = "0px";
   };
 
-
-    // add task
-  const handleAddTask = (taskName: string, taskDescription: string) => {
-    console.log("Task Added:", taskName, taskDescription);
-    // Logic to add the task to the project goes here
+  // Add task
+  const handleAddTask = (newTask: Task) => {
+    console.log("Task Added:", newTask);
+    // Add the new task to the tasks state
+    setTasks((prevTasks) => [...prevTasks, newTask]);
   };
 
-  // add task  
   const handleToggleTaskPopup = () => {
     setIsTaskPopupVisible(!isTaskPopupVisible);
   };
@@ -231,10 +186,6 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
   const handleOpenTaskDetails = (task: Task) => {
     setSelectedTaskForDetails(task);
   };
-  
-  // const handleCloseTaskDetails = () => {
-  //   setSelectedTaskForDetails(null);
-  // };
 
   const handleUpdateTask = (updatedTask: Task) => {
     setTasks((prevTasks) =>
@@ -242,8 +193,6 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
     );
     setSelectedTaskForDetails(null);
   };
-  
-  
 
   return (
     <>
@@ -255,18 +204,10 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                 <th className="p-3 text-left font-normal sticky left-0 bg-white z-10 min-w-[200px]">
                   Name
                 </th>
-                <th className="p-3 text-left font-normal min-w-[146px]">
-                  Assignee
-                </th>
-                <th className="p-3 text-left font-normal min-w-[120px]">
-                  Due Date
-                </th>
-                <th className="p-3 text-left font-normal min-w-[146px]">
-                  Status
-                </th>
-                <th className="p-3 text-left font-normal min-w-[120px]">
-                  Comment
-                </th>
+                <th className="p-3 text-left font-normal min-w-[146px]">Assignee</th>
+                <th className="p-3 text-left font-normal min-w-[120px]">Due Date</th>
+                <th className="p-3 text-left font-normal min-w-[146px]">Status</th>
+                <th className="p-3 text-left font-normal min-w-[120px]">Comment</th>
                 <th className="p-3 text-left font-normal min-w-[120px]"></th>
               </tr>
             </thead>
@@ -276,14 +217,12 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                 <tr
                   key={index}
                   className="hover:bg-gray-100 group border-b border-gray-300 items-center text-sm"
-                  // onClick={() => handleOpenTaskDetails(task)}
                 >
                   {/* Name column */}
                   <td
                     className="flex sticky left-0 bg-white z-10 group-hover:bg-gray-100 min-w-[200px] font-semibold"
                     onClick={() => handleOpenTaskDetails(task)}
                   >
-                    
                     <div className="p-4 flex items-center w-full">
                       <img src="/task.svg" alt="Task" className="min-w-min min-h-min mr-2" />
                       {task.taskName}
@@ -319,13 +258,21 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                   </td>
 
                   {/* Due Date */}
-                  <td className="p-3">{new Date(task.taskDueDate).toLocaleDateString("en-TH")}</td>
+                  <td className="p-3">
+                    {task.taskDueDate
+                      ? new Date(task.taskDueDate).toLocaleDateString("en-TH")
+                      : "-"}
+                  </td>
 
                   {/* Status */}
                   <td className="p-3">
                     <span
                       className={`flex max-w-fit items-center px-3 py-1 rounded-full text-sm gap-x-2 font-semibold text-white ${
-                        task.taskStatus === "DONE" ? "bg-green-400" : task.taskStatus === "PROGRESS" ? "bg-blue-400" : "bg-orange-400"
+                        task.taskStatus === "DONE"
+                          ? "bg-green-400"
+                          : task.taskStatus === "PROGRESS"
+                          ? "bg-blue-400"
+                          : "bg-orange-400"
                       } whitespace-nowrap`}
                     >
                       <img src="/todo.svg" alt="Status" />
@@ -341,7 +288,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                         onClick={(e) => handleOpenCommentModal(task, e)}
                       >
                         <img src="/comment.svg" alt="Comment" />
-                        {task.taskComments.length > 0 && <span>{task.taskComments.length}</span>}
+                        {/* {task.taskComments.length > 0 && <span>{task.taskComments.length}</span>} */}
                       </button>
                     </div>
                   </td>
@@ -415,7 +362,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                 onClick={handleDeleteTask}
               >
                 <img src="/remove_red.svg" alt="Remove" />
-                Delete 
+                Delete
               </button>
             </div>
           </>
@@ -434,12 +381,14 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
       )}
 
       {/* Add Task Popup */}
-      <AddTaskPopup
-        // projectId={projectId}
-        isVisible={isTaskPopupVisible}
-        onClose={() => setIsTaskPopupVisible(false)}
-        onAddTask={handleAddTask}
-      />
+      {projectId && (
+        <AddTaskPopup
+          projectId={projectId}
+          isVisible={isTaskPopupVisible}
+          onClose={() => setIsTaskPopupVisible(false)}
+          onAddTask={handleAddTask}
+        />
+      )}
     </>
   );
 }
