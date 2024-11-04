@@ -284,7 +284,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
                   <td className="p-3">
                     <div className="flex gap-4">
                       <button
-                        className="flex gap-x-2 text-gray-500 hover:ring-gray-200 hover:ring-1"
+                        className="flex gap-x-2 text-gray-500 "
                         onClick={(e) => handleOpenCommentModal(task, e)}
                       >
                         <img src="/comment.svg" alt="Comment" />
@@ -322,7 +322,7 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
           </table>
         </div>
 
-        {/* Backdrop and Comment Modal */}
+        {/* Inside TaskContainer.tsx, when rendering CommentModal */}
         {selectedTask && (
           <>
             <div
@@ -330,18 +330,20 @@ export default function TaskContainer({ currentProject }: TaskContainerProps) {
               onClick={handleCloseCommentModal}
             ></div>
 
-            <CommentModal
-              taskName={selectedTask.taskName}
-              comments={selectedTask.taskComments}
-              onClose={handleCloseCommentModal}
-              onSendComment={handleSendComment}
-              position={{
-                top: modalPosition.top - 128,
-                left: modalPosition.left - 640,
-              }}
-            />
+              <CommentModal
+                taskId={selectedTask.taskId}
+                onClose={handleCloseCommentModal}
+                position={{
+                  top: modalPosition.top - 128,
+                  left: modalPosition.left - 640,
+                }}
+                
+              />
+            
           </>
         )}
+
+
 
         {selectedTaskForDelete && (
           <>

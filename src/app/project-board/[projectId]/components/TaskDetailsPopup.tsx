@@ -125,7 +125,7 @@ const TaskDetailsPopup = ({
 
       // Mark members as selected if they are in taskParticipants
       const updatedMembers = projectMembers.map((member) => {
-        const isSelected = task.taskParticipants.some(
+        const isSelected = (task.taskParticipants || []).some(
           (participant) => participant.memberId === member.memberId
         );
         return { ...member, selected: isSelected };
@@ -448,7 +448,7 @@ const TaskDetailsPopup = ({
         />
       )}
 
-      {showCommentModal && (
+      {/* {showCommentModal && (
         <CommentModal
           taskName={taskName}
           comments={comments}
@@ -456,7 +456,7 @@ const TaskDetailsPopup = ({
           onSendComment={handleSendComment}
           position={{ top: 400, left: 720 }}
         />
-      )}
+      )} */}
     </div>
   );
 };
