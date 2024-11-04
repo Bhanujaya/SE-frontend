@@ -34,7 +34,7 @@ const AddMemberPopup: React.FC<AddMemberPopupProps> = ({ isVisible, onClose, onI
       setErrors({ ...errors, email: '' }); // Clear errors if the email is valid
     }
   
-    const projectId = "6292753c-273d-4d53-a0d7-f4e0b377260e";  // dynamic projectId later
+    const projectId = "2a5cf408-ce79-44b0-8ba9-97c48284c77d	";  // dynamic projectId later
     const inviteData = { email, role }; // Include role in the request
   
     try {

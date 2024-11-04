@@ -4,9 +4,10 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaCalendarAlt } from 'react-icons/fa';
 import CommentModal from "./CommentModal";  
-import { AddMemberPopup } from "@/app/test/components/addmember";
+import AddMemberPopup from "@/app/project-board/[projectId]/components/addmember";
 
 interface AddTaskPopupProps {
+  // projectId: string;
   isVisible: boolean;
   onClose: () => void;
   onAddTask: (taskName: string, taskDescription: string, taskStatus: string, dueDate: Date | null) => void;
@@ -64,7 +65,7 @@ const AddTaskPopup = ({ isVisible, onClose, onAddTask }: AddTaskPopupProps) => {
     console.log(formErrors.taskName)
         // Check if there are any form errors
 
-    const projectId = "6292753c-273d-4d53-a0d7-f4e0b377260e"  // dynamic projectId later
+    const projectId = "2a5cf408-ce79-44b0-8ba9-97c48284c77d	"  // dynamic projectId later
     const taskData = {
       // taskId: "", // Backend should generate this if not required upfront
       taskName: taskName,
@@ -72,7 +73,8 @@ const AddTaskPopup = ({ isVisible, onClose, onAddTask }: AddTaskPopupProps) => {
       // taskStatus: taskStatus.toUpperCase().replace(" ", "_"), // Formatting status to match backend format (e.g., "TODO")
       taskDueDate: selectedDate ? selectedDate.toISOString() : null, // Format the date to ISO string
       taskProjectId: projectId, // Replace with actual project ID or make dynamic if available
-      // ใส่ทำไมจาก postman
+      
+
       taskOwnerId: parsedTokenData.memberId, // Set the task owner ID correctly
       // taskParticipants: [], // Populate with selected participants if applicable
       taskArai: '',
@@ -83,6 +85,9 @@ const AddTaskPopup = ({ isVisible, onClose, onAddTask }: AddTaskPopupProps) => {
       
       try {
         console.log('Token being sent:', token);
+        console.log('projectId:', projectId)
+        console.log('parsedTokenData.memberId:', parsedTokenData.memberId)
+
         const response = await fetch("http://localhost:9000/task/create", {
           method: "POST",
           headers: {
@@ -175,47 +180,7 @@ const AddTaskPopup = ({ isVisible, onClose, onAddTask }: AddTaskPopupProps) => {
           To do
         </div>
 
-        {/* <button
-          onClick={(e) => {
-            e.preventDefault(); // Prevent default form submission
-            handleStatusChange("TODO");
-          }}
-          className={`text-xs py-1 w-20 h-6 rounded-2xl hover:bg-orange-400 ${
-            taskStatus === "TODO" ? "bg-orange-400 text-white" : "bg-orange-300 text-white"
-          }`}
-        >
-          <img src="/todo.svg" alt="To Do" className="inline-block w-4 h-4 mr-2" />
-          To do
-        </button> */}
-
-        {/*           
-          <button
-            onClick={() => handleStatusChange("PROGRESS")}
-            className={`text-xs py-1 w-32 h-6 rounded-2xl hover:bg-blue-400 ${
-              taskStatus === "PROGRESS" ? "bg-blue-400 text-white" : "bg-blue-300 text-white"
-            }`}
-          >
-            <img src={taskStatus === "PROGRESS" ? imgSrc : "/undo.svg"} alt="In Progress" className="inline-block w-4 h-4 mr-2" />
-            IN PROGRESS
-          </button>
-          <button
-            onClick={() => handleStatusChange("DONE")}
-            className={`text-xs py-1 w-20 h-6 rounded-2xl hover:bg-green-400 ${
-              taskStatus === "DONE" ? "bg-green-400 text-white" : "bg-green-300 text-white"
-            }`}
-          >
-            <img src={taskStatus === "DONE" ? imgSrc : "/undo.svg"} alt="Done" className="inline-block w-4 h-4 mr-2" />
-            DONE
-          </button> */}
-          
-          
-          {/* <div className="ml-48">
-            <h2 className="font-bold">Assignee</h2>
-            <button className="text-sm text-gray-400 ml-10" onClick={openAddMemberPopup}>
-                <span className="text-xl font-light mr-2">+</span>
-                        Assignee
-            </button>
-          </div> */}
+      
         
         </div>
 
