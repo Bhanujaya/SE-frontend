@@ -4,101 +4,97 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import CommentModal from "./CommentModal";
 import AddTaskPopup from "./AddTaskPopup";
+import TaskDetailsPopup from './TaskDetailsPopup'
 
-export type Task = {
-  id: string;
-  name: string;
-  assignee: string[];
-  dueDate: string;
-  status: "To Do" | "In Progress" | "Done";
-  comments: { name: string; text: string; time: string }[];
-  href: string;
-  projectId: string;
+
+interface Task {
+  taskId: string;
+  taskName: string;
+  taskDetail: string;
+  taskStatus: string;
+  taskProjectId: string;
+  taskComments: any[]; // Adjust type as needed
+  taskParticipants: any[]; // Adjust type as needed
+  taskDueDate: string;
 }
 
-// ------------------ Mock data ------------------
+interface MemberDetail {
+  memberEmail: string;
+  memberName: string;
+  memberLastname: string;
+  username: string;
+  img: string | null;
+}
 
-const tasksData: Task[] = [
-  {
-    id: "1",
-    name: "Design homepage",
-    assignee: ["John Cena"],
-    dueDate: "2024-10-05",
-    status: "In Progress",
-    comments: [
-      {
-        name: "Nichakann Nernngam",
-        text: "Work on the hero section",
-        time: "2024-09-30 14:23",
-      },
-    ],
-    href: "#",
-    projectId: "1",
-  },
-  {
-    id: "2",
-    name: "Fix bugs in the homepage",
-    assignee: ["Song Kang"],
-    dueDate: "2024-10-01",
-    status: "To Do",
-    comments: [
-      {
-        name: "Nichakann Nernngam",
-        text: "Check form validation",
-        time: "2024-09-25 13:33",
-      },
-      {
-        name: "John Cena",
-        text: "Nice",
-        time: "2024-09-30 16:44",
-      },
-    ],
-    href: "#",
-    projectId: "1",
-  },
-  {
-    id: "3",
-    name: "Create header",
-    assignee: ["Song Kang"],
-    dueDate: "2024-10-01",
-    status: "Done",
-    comments: [],
-    href: "#",
-    projectId: "1",
-  },
-];
+interface Member {
+  memberId: string;
+  detail: MemberDetail;
+}
+
+interface ProjectDetail {
+  projectId: string;
+  projectName: string;
+  projectDescription: string;
+  projectDeadline: string;
+  projectFav: string;
+  projectOwner: Member;
+  projectImg: string;
+
+}
+
+interface Project {
+  project: ProjectDetail;
+  tasks: any[];
+  assigns: any[];
+  meetings: any[];
+  logs: any[];
+
+}
+
+interface TaskContainerProps {
+  currentProject: Project | null;
+}
 
 // -----------------------------------------------
 
-export default function TaskContainer({ projectId }: { projectId: string }) {
-  const [tasks, setTasks] = useState<Task[]>([]);
-    // add task
+export default function TaskContainer({ currentProject }: TaskContainerProps) {
+  const [tasks, setTasks] = useState<Task[]>(currentProject?.tasks || []);
   const [isTaskPopupVisible, setIsTaskPopupVisible] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // Store selected task for popup
+  const [selectedTaskForDelete, setSelectedTaskForDelete] = useState<Task | null>(null);
+  const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+  
 
   useEffect(() => {
+    
     // Filter tasks based on projectId
-    const filteredTasks = tasksData.filter(
-      (task) => task.projectId === projectId
-    );
-    setTasks(filteredTasks);
-  }, [projectId]);
+    if (currentProject) {
+      // console.log('currentProject in TaskContainer:', currentProject)
+      // const tasks = currentProject.tasks;
+      // console.log('tasks', tasks)
+      
+      console.log('tasks in current project: ', currentProject.tasks)
+      const currentTasks = currentProject.tasks; 
+      setTasks(currentTasks);
+      // console.log('currentProject:', currentProject)
 
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [selectedTaskForDelete, setSelectedTaskForDelete] =
-    useState<Task | null>(null);
-  const [modalPosition, setModalPosition] = useState<{
-    top: number;
-    left: number;
-  }>({ top: 0, left: 0 });
-  const [deleteModalPosition, setDeleteModalPosition] = useState<{
-    top: number;
-    left: number;
-  }>({ top: 0, left: 0 });
+      console.log('currentTasks after setTasks:', currentTasks)
+      console.log('tasks after setTasks:', tasks)
 
+
+    } 
+
+    
+  }, [currentProject]);
+
+  
+  const [modalPosition, setModalPosition] = useState<{ top: number; left: number; }>({ top: 0, left: 0 });
+  const [deleteModalPosition, setDeleteModalPosition] = useState<{ top: number; left: number; }>({ top: 0, left: 0 });
   {
     /* Handle Comment Modal */
   }
+
   const handleOpenCommentModal = (task: Task, event: React.MouseEvent) => {
     const buttonRect = (event.target as HTMLElement).getBoundingClientRect();
     setSelectedTask(task);
@@ -127,14 +123,74 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
   }) => {
     if (selectedTask) {
       const updatedTasks = tasks.map((task) =>
-        task.name === selectedTask.name
-          ? { ...task, comments: [...task.comments, newComment] }
+        task.taskName === selectedTask.taskName
+          ? { ...task, comments: [...task.taskComments, newComment] }
           : task
       );
       setSelectedTask({
         ...selectedTask,
-        comments: [...selectedTask.comments, newComment],
+        taskComments: [...selectedTask.taskComments, newComment],
       });
+    }
+  };
+
+
+  // Function to call the delete endpoint
+  const deleteTask = async (projectId: string, taskId: string) => {
+    
+    // handle token
+    const tokenData = localStorage.getItem("jwt");
+    const parsedTokenData = tokenData ? JSON.parse(tokenData) : null;
+    const token = parsedTokenData ? parsedTokenData.token : "";
+    console.log('token for delete:', token)
+
+    if (!token) {
+      console.error("Token not found");
+      return;
+    }
+
+    const taskData = {
+      projectId: currentProject?.project.projectId,
+      taskId: selectedTaskForDelete?.taskId,
+      
+    };
+
+    console.log('taskData', taskData)
+    
+    try {
+      const response = await fetch(`http://localhost:9000/task/delete?p=${projectId}&t=${taskId}`, {
+        method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Include token for authorization
+        },
+        body: JSON.stringify(taskData)
+      });
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log("Task deleted:", responseData);
+        setTasks((prevTasks) => prevTasks.filter((task) => task.taskId !== taskId));
+        // setSelectedTaskForDelete(null);
+        handleCloseDeleteModal()
+      } else {
+        console.error("Failed to delete task");
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
+  // Update the task list by removing the selected task
+  const handleDeleteTask = () => {
+    if (selectedTaskForDelete && currentProject) {
+      // setTasks((prevTasks) =>
+      //   prevTasks.filter((task) => task.taskName !== selectedTaskForDelete.taskName)
+      // );
+
+      deleteTask(currentProject.project.projectId, selectedTaskForDelete.taskId);
+      // console.log('id:', currentProject.project.projectId, selectedTaskForDelete.taskId)
+
+      handleCloseDeleteModal();
     }
   };
 
@@ -158,15 +214,6 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
     document.body.style.paddingRight = "0px";
   };
 
-  // Update the task list by removing the selected task
-  const handleDeleteTask = () => {
-    if (selectedTaskForDelete) {
-      setTasks((prevTasks) =>
-        prevTasks.filter((task) => task.name !== selectedTaskForDelete.name)
-      );
-      handleCloseDeleteModal();
-    }
-  };
 
     // add task
   const handleAddTask = (taskName: string, taskDescription: string) => {
@@ -174,12 +221,26 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
     // Logic to add the task to the project goes here
   };
 
-
   // add task  
   const handleToggleTaskPopup = () => {
-  setIsTaskPopupVisible(!isTaskPopupVisible);
+    setIsTaskPopupVisible(!isTaskPopupVisible);
   };
 
+  const handleOpenTaskDetails = (task: Task) => {
+    setSelectedTaskForDetails(task);
+  };
+  
+  // const handleCloseTaskDetails = () => {
+  //   setSelectedTaskForDetails(null);
+  // };
+
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => (task.taskId === updatedTask.taskId ? updatedTask : task))
+    );
+    setSelectedTaskForDetails(null);
+  };
+  
   return (
     <>
       <div className="relative bg-white rounded-lg py-4 pr-24 pl-12 lg:col-span-2">
@@ -211,54 +272,47 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
                 <tr
                   key={index}
                   className="hover:bg-gray-100 group border-b border-gray-300 items-center text-sm"
+                  onClick={() => handleOpenTaskDetails(task)}
                 >
                   {/* Name column */}
-
                   <td className="flex sticky left-0 bg-white z-10 group-hover:bg-gray-100 min-w-[200px] font-semibold">
-                    <Link
-                      href={task.href}
-                      className="p-4 flex items-center w-full"
-                    >
-                      <img
-                        src="/task.svg"
-                        alt="Task"
-                        className="min-w-min min-h-min mr-2"
-                      />
-
-                      {task.name}
-                    </Link>
+                    <div className="p-4 flex items-center w-full">
+                      <img src="/task.svg" alt="Task" className="min-w-min min-h-min mr-2" />
+                      {task.taskName}
+                    </div>
                   </td>
 
-                  <td className="p-3">{task.assignee}</td>
-                  <td className="p-3">{task.dueDate}</td>
+                  {/* Assignee */}
+                  <td className="p-3"></td>
+
+                  {/* Due Date */}
+                  <td className="p-3">{new Date(task.taskDueDate).toLocaleDateString("en-TH")}</td>
+
+                  {/* Status */}
                   <td className="p-3">
                     <span
                       className={`flex max-w-fit items-center px-3 py-1 rounded-full text-sm gap-x-2 font-semibold text-white ${
-                        task.status === "Done"
-                          ? "bg-green-400"
-                          : task.status === "In Progress"
-                          ? "bg-blue-400"
-                          : "bg-orange-400"
+                        task.taskStatus === "DONE" ? "bg-green-400" : task.taskStatus === "PROGRESS" ? "bg-blue-400" : "bg-orange-400"
                       } whitespace-nowrap`}
                     >
                       <img src="/todo.svg" alt="Status" />
-                      {task.status}
+                      {task.taskStatus}
                     </span>
                   </td>
+
+                  {/* Comments */}
                   <td className="p-3">
                     <div className="flex gap-4">
-                      {/* Comment Button */}
                       <button
-                        className="flex gap-x-2 text-gray-500 hover:ring-gray-200 hover-ring-1"
+                        className="flex gap-x-2 text-gray-500 hover:ring-gray-200 hover:ring-1"
                         onClick={(e) => handleOpenCommentModal(task, e)}
                       >
                         <img src="/comment.svg" alt="Comment" />
-                        {task.comments.length > 0 && (
-                          <span>{task.comments.length}</span>
-                        )}
+                        {task.taskComments.length > 0 && <span>{task.taskComments.length}</span>}
                       </button>
                     </div>
                   </td>
+
                   {/* Ellipsis Button for Delete */}
                   <td className="p-0 items-center justify-center text-right">
                     <button
@@ -279,8 +333,7 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
                     onClick={handleToggleTaskPopup}
                   >
                     <div className="flex items-center ml-2">
-                      <span className="text-2xl font-light pb-1 mr-2">+</span>{" "}
-                      Add Task
+                      <span className="text-2xl font-light pb-1 mr-2">+</span> Add Task
                     </div>
                   </button>
                 </td>
@@ -298,8 +351,8 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
             ></div>
 
             <CommentModal
-              taskName={selectedTask.name}
-              comments={selectedTask.comments}
+              taskName={selectedTask.taskName}
+              comments={selectedTask.taskComments}
               onClose={handleCloseCommentModal}
               onSendComment={handleSendComment}
               position={{
@@ -329,12 +382,22 @@ export default function TaskContainer({ projectId }: { projectId: string }) {
                 onClick={handleDeleteTask}
               >
                 <img src="/remove_red.svg" alt="Remove" />
-                Delete
+                Delete 
               </button>
             </div>
           </>
         )}
       </div>
+
+      {/* Task Details Popup */}
+      {selectedTaskForDetails && (
+        <TaskDetailsPopup
+          task={selectedTaskForDetails}
+          isVisible={true}
+          onClose={() => setSelectedTaskForDetails(null)}
+          onSaveTask={handleUpdateTask}
+        />
+      )}
 
       {/* Add Task Popup */}
       <AddTaskPopup
