@@ -1,19 +1,17 @@
 "use client";
-
 import React from 'react';
 import { GoStarFill } from "react-icons/go";
 import { GoStar } from "react-icons/go";
-import { GoProjectRoadmap } from "react-icons/go";
 
 export type ProjectsProps = {
-  id: Number;
-  projectName: String;
-  creator: String;
-  endDate: String;
-  description: String;
+  id: string;
+  projectName: string;
+  creator: string;
+  endDate: string;
+  description: string;
   imageUrl: string;
-  isFavorited: Boolean;
-  onFavoriteToggle: (id: Number) => void;
+  isFavorited: boolean;
+  onFavoriteToggle: (id: string) => void;
 };
 
 export function Projects({
@@ -27,28 +25,44 @@ export function Projects({
   onFavoriteToggle,
 }: ProjectsProps) {
   return (
-    <div className="bg-white shadow-3xl rounded-xl overflow-hidden w-56 h-72 relative">
-      <img className="h-1/2 w-full object-cover" src={imageUrl} alt="Project image" />
-      <div className="text-base mt-2 ml-1.5 flex flex-col space-y-1 justify-between">
-        <div className="flex gap-1 items-center ml-2">
-        <GoProjectRoadmap />
-
-          <div className='font-semibold '>{projectName}</div>
+    <div className="bg-white shadow-lg rounded-xl overflow-hidden w-56 h-72 relative hover:shadow-xl transition-shadow duration-300">
+      <div className="h-36">
+        <img
+          className="h-full w-full object-cover"
+          src={imageUrl}
+          alt="Project image"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/placeholder.png";
+          }}
+        />
+      </div>
+      <div className="p-4 flex flex-col h-36">
+        <div className="flex gap-1 items-center mb-2">
+          <img
+            src="/project-recent.svg"
+            alt="Project"
+            className="w-5 h-5"
+          />
+          <div className='font-semibold text-lg'>{projectName}</div>
         </div>
-        <div className=" text-xs ml-3">{description}</div>
+        <div className="text-gray-600 text-sm mb-2">{description}</div>
+        <div className="text-gray-500 text-xs mt-auto text-right">
+          end date - {endDate}
+        </div>
       </div>
-      <div className="absolute bottom-4 text-gray-400 right-4 flex items-center text-sm  font-light">
-        <span className="mr-1">end date -</span>
-        <span>{endDate}</span>
-      </div>
-
-      {/* Favorite Button */}
       <div className="absolute top-2 right-2">
-        <button onClick={() => onFavoriteToggle(id)}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onFavoriteToggle(id);
+          }}
+          className="p-1 hover:bg-white hover:bg-opacity-50 rounded-full transition-colors duration-200"
+        >
           {isFavorited ? (
-            <GoStarFill size={24} className="text-yellow-400 mt-1" />
+            <GoStarFill size={24} className="text-yellow-400" />
           ) : (
-            <GoStar size={24} className='mt-1' />
+            <GoStar size={24} className="text-gray-400 hover:text-yellow-400" />
           )}
         </button>
       </div>
