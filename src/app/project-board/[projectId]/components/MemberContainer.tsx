@@ -1,6 +1,7 @@
+// MemberContainer.tsx
+
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { TfiClose } from "react-icons/tfi";
 import AddMemberPopup from "./AddMemberPopup";
@@ -12,18 +13,6 @@ interface MemberData {
   role: string;
   img: string;
 }
-
-// interface ProjectOwner {
-//   token: string | null;
-//   memberId: string;
-//   detail: {
-//     memberEmail: string;
-//     memberName: string;
-//     memberLastname: string;
-//     username: string;
-//     img: string;
-//   };
-// }
 
 interface MemberDetail {
   memberEmail: string;
@@ -46,113 +35,61 @@ interface ProjectDetail {
   projectFav: string;
   projectOwner: Member;
   projectImg: string;
-
 }
-
 
 interface Project {
   project: ProjectDetail;
   tasks: any[];
-  assigns: any[];
+  assigns: MemberData[]; // Updated type to MemberData[]
   meetings: any[];
   logs: any[];
-
 }
 
 interface MemberContainerProps {
   currentProject: Project | null;
+  onProjectDataChange: () => void; // Added prop to handle project data refresh
 }
 
-// ------------------ Mock data ------------------
-
-// const membersData: Member[] = [
-//   {
-//     id: "1",
-//     username: "_pleang",
-//     firstName: "Pleang",
-//     lastName: "Nernngam",
-//     email: "lingnoi@kiki.com",
-//     role: "Owner",
-//     profileImage: "/profile.svg",
-//     projectIds: ["1", "2"],
-//   },
-//   {
-//     id: "2",
-//     username: "soodlhor",
-//     firstName: "Song",
-//     lastName: "Kang",
-//     email: "soodlhor@mak.com",
-//     role: "Member",
-//     profileImage: "/profile.svg",
-//     projectIds: ["1", "3"],
-//   },
-//   {
-//     id: "3",
-//     username: "big_muscle",
-//     firstName: "John",
-//     lastName: "Cena",
-//     email: "khangrang@mak.com",
-//     role: "Member",
-//     profileImage: "/profile.svg",
-//     projectIds: ["1"],
-//   },
-// ];
-
-// -----------------------------------------------
-
-export default function MemberContainer({ currentProject }: MemberContainerProps) {
+export default function MemberContainer({
+  currentProject,
+  onProjectDataChange,
+}: MemberContainerProps) {
   const [members, setMembers] = useState<MemberData[]>(currentProject?.assigns || []);
-  const [isPopupVisible, setIsPopupVisible] = useState(false); 
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
 
   useEffect(() => {
     if (currentProject) {
-      // console.log('currentProj', currentProj)
       setMembers(currentProject.assigns);
-    
-    } 
-  }, [currentProject]); // Re-run the filter when projectId changes
-
-  useEffect(() => {
-    console.log('members:', members);
-    
-    // members.forEach((member, index) => {
-    //   console.log(`Member ${index + 1} details:`, member.detail);
-    // });
-    
-  }, [members]);
-
+    }
+  }, [currentProject]);
 
   // Function to remove a member
   const handleRemoveMember = async (memberId: string) => {
-    const projectId = currentProject?.project.projectId
+    const projectId = currentProject?.project.projectId;
+
     const memberData = {
       projectId: projectId,
       memberId: memberId,
-      role: 'member',
-
+      role: "member",
     };
-
-    console.log('memberData', memberData)
 
     try {
       const userData = localStorage.getItem("jwt");
       if (!userData) throw new Error("No token found");
-  
+
       const { token } = JSON.parse(userData);
-      console.log('token being sent:',token)
       const response = await fetch(`http://localhost:9000/${projectId}/unassign`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(memberData), // Adjust request body format as needed
+        body: JSON.stringify(memberData),
       });
-  
+
       if (response.ok) {
-        // Update state to reflect member removal
-        setMembers((prevMembers) => prevMembers.filter((member) => member.memberId !== memberId));
         console.log("Member deleted successfully");
+        onProjectDataChange(); // Refresh project data to update members list
       } else {
         console.error("Failed to delete member:", response.statusText);
       }
@@ -161,47 +98,26 @@ export default function MemberContainer({ currentProject }: MemberContainerProps
     }
   };
 
-  // Function to add a new member (for simplicity, a placeholder member is added)
-  // const handleAddMember = () => {
-  //   {
-  //     /* Implements later */
-  //   }
-
-  //   // const newMember: Member = {
-  //   //   id: "0",
-  //   //   name: "New Member",
-  //   //   role: "Member",
-  //   //   profileImage: "/profile.svg",
-  //   // };
-  //   // setMembers([...members, newMember]);
-  // };
-
+  // Function to handle adding a new member
   const handleAddMember = () => {
-    setIsPopupVisible(true); 
+    setIsPopupVisible(true);
   };
 
   const handleClosePopup = () => {
-    setIsPopupVisible(false); 
+    setIsPopupVisible(false);
   };
 
-    const handleInviteMember = (email: string) => {
-    // const newMember: Member = {
-    //   memberId: (members.length + 1).toString(),
-    //   username: "new_member",
-    //   firstName: "New",
-    //   lastName: "Member",
-    //   email: email,
-    //   role: "Member",
-    //   profileImage: "/profile.svg",
-    //   projectIds: [projectId], 
-    // };
-    // setMembers([...members, newMember]); 
-    // setIsPopupVisible(false); 
+  const handleInviteMember = (email: string) => {
+    console.log("Invited member with email:", email);
+    onProjectDataChange(); // Refresh project data to update members list
+    setIsPopupVisible(false);
   };
+
+  const projectId = currentProject?.project.projectId;
 
   return (
     <>
-      {/*Header*/}
+      {/* Header */}
       <div className="flex items-center justify-between p-2">
         <div className="flex items-center">
           <img src="/people.svg" alt="People" className="mr-2" />
@@ -222,68 +138,58 @@ export default function MemberContainer({ currentProject }: MemberContainerProps
         <div className="overflow-y-auto h-full">
           <table className="min-w-full table-auto bg-white rounded-lg">
             <thead>
-              <tr className="text-gray-400 text-left text-sm ">
+              <tr className="text-gray-400 text-left text-sm">
                 <th className="p-3 font-normal">Name</th>
                 <th className="p-3 font-normal">Role</th>
                 <th className="p-3 font-normal"></th>
               </tr>
             </thead>
             <tbody>
+              {/* Project Owner */}
               <tr className="border-b">
-                {/* Profile Image and Name */}
                 <td className="p-3 flex items-center">
-                    <div className="relative">
-                      <img
-                        src={currentProject?.project.projectOwner.detail.img || "/profile.svg"} // Default image if none is provided
-                        alt={`${currentProject?.project.projectOwner.detail.memberName || 'Unknown'} ${currentProject?.project.projectOwner.detail.memberLastname}`}
-                        className="w-8 h-8 rounded-full mr-2"
-                      />
-                      {/* Show crown for Owner */}
-                      
-                      <img
-                        src="/crown.svg"
-                        alt="Crown"
-                        className="absolute top-[-10px] right-0 w-4 h-4"
-                      />
-                      
-                    </div>
-                    <span className="text-sm ml-2">
-                    {currentProject?.project.projectOwner.detail.memberName} {currentProject?.project.projectOwner.detail.memberLastname}
-                    </span>
-                  </td>
-                  {/* Role */}
-                  <td className="p-3 text-sm">Owner</td>
-
-
+                  <div className="relative">
+                    <img
+                      src={currentProject?.project.projectOwner.detail.img || "/profile.svg"}
+                      alt={`${currentProject?.project.projectOwner.detail.memberName || "Unknown"} ${
+                        currentProject?.project.projectOwner.detail.memberLastname
+                      }`}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    {/* Show crown for Owner */}
+                    <img
+                      src="/crown.svg"
+                      alt="Crown"
+                      className="absolute top-[-10px] right-0 w-4 h-4"
+                    />
+                  </div>
+                  <span className="text-sm ml-2">
+                    {currentProject?.project.projectOwner.detail.memberName}{" "}
+                    {currentProject?.project.projectOwner.detail.memberLastname}
+                  </span>
+                </td>
+                <td className="p-3 text-sm">Owner</td>
+                <td className="p-3"></td>
               </tr>
 
+              {/* Other Members */}
               {members.map((member, index) => (
                 <tr key={index} className="border-b">
-                  {/* Profile Image and Name */}
                   <td className="p-3 flex items-center">
                     <div className="relative">
                       <img
-                        src={member.img || "/profile.svg"} // Default image if none is provided
-                        alt={`${member.memberName || 'Unknown'} ${member.memberLastName}`}
+                        src={member.img || "/profile.svg"}
+                        alt={`${member.memberName || "Unknown"} ${member.memberLastName}`}
                         className="w-8 h-8 rounded-full mr-2"
                       />
-                      {/* Show crown for Owner */}
-                      {/* {member.role === "Owner" && (
-                        <img
-                          src="/crown.svg"
-                          alt="Crown"
-                          className="absolute top-[-10px] right-0 w-4 h-4"
-                        />
-                      )} */}
                     </div>
                     <span className="text-sm ml-2">
                       {member.memberName} {member.memberLastName}
                     </span>
                   </td>
-                  {/* Role */}
-                  <td className="p-3 text-sm">{member.role.charAt(0).toUpperCase() + member.role.slice(1)}</td>
-                  
-                  
+                  <td className="p-3 text-sm">
+                    {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                  </td>
                   <td className="p-3">
                     <button
                       className="hover:bg-gray-100 rounded-md p-1"
@@ -291,10 +197,7 @@ export default function MemberContainer({ currentProject }: MemberContainerProps
                     >
                       <TfiClose className="w-4 h-4 text-gray-800" />
                     </button>
-
                   </td>
-
-
                 </tr>
               ))}
 
@@ -306,8 +209,7 @@ export default function MemberContainer({ currentProject }: MemberContainerProps
                     onClick={handleAddMember}
                   >
                     <div className="flex items-center ml-2">
-                      <span className="text-2xl font-light pb-1 mr-2">+</span>{" "}
-                      Add Member
+                      <span className="text-2xl font-light pb-1 mr-2">+</span> Add Member
                     </div>
                   </button>
                 </td>
@@ -318,11 +220,14 @@ export default function MemberContainer({ currentProject }: MemberContainerProps
       </div>
 
       {/* Add Member Popup */}
-      <AddMemberPopup
-        isVisible={isPopupVisible}
-        onClose={handleClosePopup}
-        onInvite={handleInviteMember}
-      />
+      {projectId && (
+        <AddMemberPopup
+          projectId={projectId}
+          isVisible={isPopupVisible}
+          onClose={handleClosePopup}
+          onInvite={handleInviteMember}
+        />
+      )}
     </>
   );
 }
